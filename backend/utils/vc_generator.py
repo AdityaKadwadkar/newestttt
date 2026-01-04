@@ -18,6 +18,7 @@ class VCGenerator:
     CONTEXT = [
         "https://www.w3.org/2018/credentials/v1",
         "https://w3id.org/security/suites/ed25519-2020/v1",
+        "https://w3id.org/vc/status-list/2021/v1"
     ]
 
     KEYSTORE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "issuer_key.json")
@@ -112,6 +113,9 @@ class VCGenerator:
         subject = VCGenerator._build_subject(student_data, credential_type, credential_metadata=issuer_info.get('credential_metadata'))
 
         issuer_did = issuer_info.get("did") or VCGenerator.generate_did()
+        
+        # Consistent fragment for did:key (use the key identifier part)
+        fragment = issuer_did.split(":")[-1] 
 
         credential = {
             "@context": VCGenerator.CONTEXT,
@@ -120,16 +124,19 @@ class VCGenerator:
             "issuer": {
                 "id": issuer_did,
                 "name": issuer_info.get("name", "KLE Technological University"),
-                "assertionMethod": [f"{issuer_did}#key-1"],
+                "assertionMethod": [f"{issuer_did}#{fragment}"],
             },
             "issuanceDate": issued_date.isoformat() + "Z",
             "credentialSubject": subject,
         }
 
-        # Optional credentialStatus block (kept for compatibility)
+        # Optional credentialStatus block (using StatusList2021Entry)
         credential["credentialStatus"] = {
             "id": f"{credential_id}#status",
-            "type": "CredentialStatusList2020",
+            "type": "StatusList2021Entry",
+            "statusPurpose": "revocation",
+            "statusListIndex": "0",
+            "statusListCredential": f"https://example.com/status/{uuid.uuid4()}" # Placeholder
         }
 
         return credential, credential_id, issued_date
@@ -294,10 +301,13 @@ class VCGenerator:
         # Encode signature
         proof_value = "z" + VCGenerator._b58_encode(signature)
         
+        # Consistent fragment
+        fragment = did.split(":")[-1]
+        
         proof = {
             "type": "Ed25519Signature2020",
             "created": datetime.utcnow().isoformat() + "Z",
-            "verificationMethod": f"{did}#key-1",
+            "verificationMethod": f"{did}#{fragment}",
             "proofPurpose": "assertionMethod",
             "proofValue": proof_value
         }

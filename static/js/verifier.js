@@ -187,6 +187,108 @@ function renderHackathonCertificateTemplate(data) {
         </div>
     `;
 }
+// Build KLE Markscard template from verification data
+function renderMarkscardTemplate(data) {
+    const gradeCard = data.grade_card || {};
+    const header = gradeCard.credentialHeader || {};
+    const studentId = header.usn || '-';
+    const studentName = header.student_name || '-';
+    const branch = header.branch || '-';
+    const program = header.program || '';
+
+    const courses = gradeCard.courseRecords || [];
+    let rowsHtml = '';
+
+    if (Array.isArray(courses) && courses.length) {
+        rowsHtml = courses.map((course, index) => {
+            const code = course.course_code || course.courseCode || course.code || '';
+            const name = course.course_name || course.courseName || course.name || '';
+            const credits = course.credits || course.credit || '';
+            const grade = course.grade || '';
+            const gpa = course.gpa != null ? course.gpa : (course.gradePoints || course.grade_points || '');
+            return `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${code}</td>
+                    <td>${name}</td>
+                    <td>${credits}</td>
+                    <td>${grade}</td>
+                    <td>${gpa}</td>
+                </tr>
+            `;
+        }).join('');
+    } else {
+        rowsHtml = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No course records found.</td></tr>';
+    }
+
+    const totalCredits = header.total_credits || '';
+    const sgpa = header.sgpa || '';
+    const semester = header.semester || header.target_semester || '';
+
+    return `
+        <div class="markscard-wrapper">
+            <div class="markscard-header">
+                <div class="markscard-logo-box">
+                    <div class="logo-red-part">
+                        <svg viewBox="0 0 100 100" class="logo-swirl">
+                            <path d="M50 20 C 30 20, 20 40, 20 60 C 20 80, 40 90, 60 90 C 80 90, 90 70, 90 50 C 90 30, 70 10, 50 10 C 30 10, 10 30, 10 55 C 10 80, 30 95, 50 95" fill="none" stroke="white" stroke-width="8" stroke-linecap="round"/>
+                            <circle cx="75" cy="25" r="8" fill="white"/>
+                        </svg>
+                    </div>
+                    <div class="logo-white-part">KLE TECH</div>
+                </div>
+                <div class="markscard-title-block">
+                    <h1>KLE TECHNOLOGICAL UNIVERSITY</h1>
+                    <h2>GRADE CARD</h2>
+                    <h3>${program || 'Autonomous Institution'}</h3>
+                    ${semester ? `<h4 style="margin-top: 5px; color: #b91c1c; font-weight: 700;">SEMESTER: ${semester}</h4>` : ''}
+                </div>
+                <div class="markscard-photo-box"></div>
+            </div>
+
+            <div class="markscard-meta">
+                <div class="markscard-meta-row">
+                    <div class="markscard-meta-label">USN</div>
+                    <div class="markscard-meta-value">${studentId}</div>
+                </div>
+                <div class="markscard-meta-row">
+                    <div class="markscard-meta-label">Name</div>
+                    <div class="markscard-meta-value">${studentName}</div>
+                </div>
+                <div class="markscard-meta-row">
+                    <div class="markscard-meta-label">Branch</div>
+                    <div class="markscard-meta-value">${branch}</div>
+                </div>
+            </div>
+
+            <table class="markscard-table">
+                <thead>
+                    <tr>
+                        <th>S.No</th>
+                        <th>Course Code</th>
+                        <th>Course Name</th>
+                        <th>Credits</th>
+                        <th>Grade</th>
+                        <th>GPA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+
+            <div class="markscard-footer">
+                <div class="markscard-sgpa-box">
+                    <div>Total Credits: ${totalCredits || '-'}</div>
+                    <div>SGPA: ${sgpa || '-'}</div>
+                </div>
+                <div>
+                    <div style="font-size: 14px; font-weight: 600;">Computer Generated<br>Registrar</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
 
 // Render Transcript template from VC data
 function renderTranscriptTemplate(data) {
@@ -512,7 +614,7 @@ function displayVerificationResult(data, duration) {
     const gradeCard = getPopulated(data, ['grade_card', 'gradeCard']) || {};
     const credentialType = (data.credential_type || data.credentialType || subject.credentialType || subject.credential_type || '').toLowerCase().trim();
 
-    console.log('Final Extraction:', { subject, gradeCard, credentialType });
+    console.log('Verifer Extraction Engine:', { subject, gradeCard, credentialType });
 
     let statusClass = 'verification-info';
     let statusIcon = 'ℹ️';
@@ -534,7 +636,7 @@ function displayVerificationResult(data, duration) {
 
     let html = `
         <div style="background: rgba(255,255,255,0.05); padding: 5px 10px; font-size: 10px; color: #666; margin-bottom: 20px;">
-            DEBUG: Universal Verifier v3.1 | Data: ${subject.id || 'Legacy'}
+            v3.2 | Recognized Type: ${credentialType} | Subject: ${subject.id || 'Legacy'}
         </div>
         <div class="${statusClass}">
             <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
@@ -549,138 +651,51 @@ function displayVerificationResult(data, duration) {
         <div class="credential-details">
     `;
 
-    // Render hackathon certificate template for hackathon credentials
-    if (credentialType === 'hackathon' || credentialType.includes('hackathon')) {
-        html += `
-            <div class="detail-section">
-                ${renderHackathonCertificateTemplate(data)}
-            </div>
-        `;
-    }
-    // Render transcript template
-    else if (credentialType.includes('transcript')) {
-        html += `
-            <div class="detail-section">
-                ${renderTranscriptTemplate(data)}
-            </div>
-        `;
-    }
-    // Render workshop template
-    else if (credentialType === 'workshop' || credentialType.includes('workshop')) {
-        html += `
-            <div class="detail-section">
-                ${renderWorkshopCertificateTemplate(data)}
-            </div>
-        `;
-    }
-    // Render course completion template
-    else if (credentialType === 'course_completion' || credentialType.includes('completion')) {
-        html += `
-            <div class="detail-section">
-                ${renderCourseCompletionTemplate(data)}
-            </div>
-        `;
-    }
-    // Render KLE Grade Card template (Legacy or Fresh)
-    else if (credentialType === 'markscard' || credentialType === 'markscardcredential' || (gradeCard && (gradeCard.credentialHeader || gradeCard.credential_header)) || subject.courses) {
-        // PRIORITIZE: Verified Subject data (from the VC itself)
-        // FALLBACK: Local DB data (gradeCard)
+    // Unified Template Selection (Matches Student Portal exactly)
+    let templateHtml = '';
 
-        const header = {
-            usn: subject.studentId || subject.student_id || subject.id || subject.usn || (gradeCard.credentialHeader?.usn || gradeCard.credential_header?.usn) || '-',
-            student_name: subject.name || subject.student_name || subject.fullName || subject.full_name || (gradeCard.credentialHeader?.student_name || gradeCard.credential_header?.student_name) || '-',
-            branch: subject.department || subject.branch || (gradeCard.credentialHeader?.branch || gradeCard.credential_header?.branch) || '-',
-            program: subject.program || (gradeCard.credentialHeader?.program || gradeCard.credential_header?.program) || '-',
-            total_credits: subject.totalCredits || subject.total_credits || (gradeCard.credentialHeader?.total_credits || gradeCard.credential_header?.total_credits) || '-',
-            sgpa: subject.sgpa || (gradeCard.credentialHeader?.sgpa || gradeCard.credential_header?.sgpa) || '-'
-        };
-
-        const coursesSource = subject.courses || subject.courseRecords || subject.course_records || (gradeCard.courseRecords || gradeCard.course_records || []);
-        const courses = Array.isArray(coursesSource) ? coursesSource : [];
-        console.log('Courses Source Identified:', courses);
-
-        let rowsHtml = '';
-        if (courses.length > 0) {
-            courses.forEach((course, index) => {
-                // Robust course key mapping
-                const code = course.course_code || course.courseCode || course.code || '';
-                const name = course.course_name || course.courseName || course.name || '';
-                const creds = course.credits || course.credit || '';
-                const grd = course.grade || '';
-                const gpaVal = course.gpa != null ? course.gpa : (course.gradePoints || course.grade_points || '');
-                const sno = course.serial_no || course.serialNo || course.sno || (index + 1);
-
-                rowsHtml += `
-                    <tr>
-                        <td>${sno}</td>
-                        <td>${code}</td>
-                        <td>${name}</td>
-                        <td>${creds}</td>
-                        <td>${grd}</td>
-                        <td>${gpaVal}</td>
-                    </tr>
-                `;
-            });
-        } else {
-            rowsHtml = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No course records found in this credential.</td></tr>';
+    // Preparation: Map data into the format expected by the Student Portal templates
+    // The Student Portal templates expect a 'credential' object or 'data' with specific paths.
+    const normalizedData = {
+        ...data,
+        vc_data: data.vc || {},
+        grade_card: gradeCard.credentialHeader ? gradeCard : {
+            credentialHeader: {
+                usn: subject.studentId || subject.student_id || subject.id || subject.usn || '-',
+                student_name: subject.name || subject.student_name || subject.fullName || subject.full_name || '-',
+                branch: subject.department || subject.branch || '-',
+                program: subject.program || '-',
+                total_credits: subject.totalCredits || subject.total_credits || '-',
+                sgpa: subject.sgpa || subject.gpa || '-',
+                semester: subject.semester || subject.target_semester || '-'
+            },
+            courseRecords: Array.isArray(subject.courses || subject.courseRecords || subject.course_records)
+                ? (subject.courses || subject.courseRecords || subject.course_records)
+                : (gradeCard.courseRecords || [])
         }
+    };
 
+    if (credentialType.includes('hackathon')) {
+        templateHtml = renderHackathonCertificateTemplate(normalizedData);
+    } else if (credentialType.includes('workshop')) {
+        templateHtml = renderWorkshopCertificateTemplate(normalizedData);
+    } else if (credentialType.includes('completion')) {
+        templateHtml = renderCourseCompletionTemplate(normalizedData);
+    } else if (credentialType.includes('transcript')) {
+        templateHtml = renderTranscriptTemplate(normalizedData);
+    } else if (credentialType.includes('markscard') || credentialType.includes('grade') || normalizedData.grade_card.courseRecords.length > 0) {
+        templateHtml = renderMarkscardTemplate(normalizedData);
+    }
+
+    if (templateHtml) {
+        // Wrap in a contrasting container to ensure visibility in dark mode portals
         html += `
-            <div class="detail-section">
-                <div class="markscard-wrapper">
-                    <div class="markscard-header">
-                        <div class="markscard-logo-box">KLE</div>
-                        <div class="markscard-title-block">
-                            <h1>KLE TECHNOLOGICAL UNIVERSITY</h1>
-                            <h2>GRADE CARD</h2>
-                            <h3>${header.program || 'Autonomous Institution'}</h3>
-                        </div>
-                        <div class="markscard-photo-box"></div>
-                    </div>
-
-                    <div class="markscard-meta">
-                        <div class="markscard-meta-row">
-                            <div class="markscard-meta-label">USN</div>
-                            <div class="markscard-meta-value">${header.usn || '-'}</div>
-                        </div>
-                        <div class="markscard-meta-row">
-                            <div class="markscard-meta-label">Name</div>
-                            <div class="markscard-meta-value">${header.student_name || '-'}</div>
-                        </div>
-                        <div class="markscard-meta-row">
-                            <div class="markscard-meta-label">Branch</div>
-                            <div class="markscard-meta-value">${header.branch || '-'}</div>
-                        </div>
-                    </div>
-
-                    <table class="markscard-table">
-                        <thead>
-                            <tr>
-                                <th>S.No</th>
-                                <th>Course Code</th>
-                                <th>Course Name</th>
-                                <th>Credits</th>
-                                <th>Grade</th>
-                                <th>GPA</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rowsHtml}
-                        </tbody>
-                    </table>
-
-                    <div class="markscard-footer">
-                        <div class="markscard-sgpa-box">
-                            <div>Total Credits: ${header.total_credits != null ? header.total_credits : '-'}</div>
-                            <div>SGPA: ${header.sgpa != null ? header.sgpa : '-'}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 14px; font-weight: 600;">Computer Generated<br>Registrar</div>
-                        </div>
-                    </div>
-                </div>
+            <div class="detail-section" style="color: #000 !important;">
+                ${templateHtml}
             </div>
         `;
+    } else {
+        html += `<div class="alert alert-info">Credential data verified but no display template found for type: ${credentialType}</div>`;
     }
 
     // Add Raw VC JSON Section

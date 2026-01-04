@@ -514,6 +514,7 @@ function renderMarkscardTemplate(credential) {
 
     const totalCredits = header.total_credits || '';
     const sgpa = header.sgpa || '';
+    const semester = header.semester || header.target_semester || '';
 
     return `
         <div class="markscard-wrapper">
@@ -531,6 +532,7 @@ function renderMarkscardTemplate(credential) {
                     <h1>KLE TECHNOLOGICAL UNIVERSITY</h1>
                     <h2>GRADE CARD</h2>
                     <h3>${program || 'Autonomous Institution'}</h3>
+                    ${semester ? `<h4 style="margin-top: 5px; color: #b91c1c; font-weight: 700;">SEMESTER: ${semester}</h4>` : ''}
                 </div>
                 <div class="markscard-photo-box"></div>
             </div>

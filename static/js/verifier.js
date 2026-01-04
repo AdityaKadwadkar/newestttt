@@ -493,9 +493,24 @@ function displayVerificationResult(data, duration) {
 
     const isValid = data.valid;
     const status = data.status;
-    const subject = data.credential_subject || data.credentialSubject || {};
-    const gradeCard = data.grade_card || data.gradeCard || {};
-    const credentialType = (data.credential_type || data.credentialType || '').toLowerCase().trim();
+
+    // Deep Extraction Helper: Look for populated data across potential keys
+    const getPopulated = (obj, keys) => {
+        for (const key of keys) {
+            const val = obj[key];
+            if (val && (typeof val !== 'object' || Object.keys(val).length > 0)) {
+                return val;
+            }
+        }
+        return null;
+    };
+
+    // Extract Subject: Look in top-level AND inside 'vc'
+    const subject = getPopulated(data, ['credential_subject', 'credentialSubject']) ||
+        getPopulated(data.vc || {}, ['credentialSubject', 'credential_subject']) || {};
+
+    const gradeCard = getPopulated(data, ['grade_card', 'gradeCard']) || {};
+    const credentialType = (data.credential_type || data.credentialType || subject.credentialType || subject.credential_type || '').toLowerCase().trim();
 
     let statusClass = 'verification-info';
     let statusIcon = 'ℹ️';

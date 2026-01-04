@@ -113,21 +113,24 @@ def role_required(required_role):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            from flask_jwt_extended import get_jwt_identity
             claims = get_jwt()
             user_role = claims.get("role")
+            identity = get_jwt_identity()
+            
+            print(f"Auth check: user='{identity}', token_role='{user_role}', required='{required_role}'")
             
             # If required_role is a list, check if user_role is in it
-            # Otherwise, for 'admin' check, also allow 'issuer' (standard admin role in this app)
             allowed = False
             if isinstance(required_role, list):
                 allowed = user_role in required_role
             elif user_role == required_role:
                 allowed = True
             elif required_role == 'admin' and user_role == 'issuer':
-                # Map 'issuer' role to 'admin' access for the dashboard
                 allowed = True
                 
             if not allowed:
+                print(f"Auth Failed for {identity}: expected {required_role}, got {user_role}")
                 return json_response(False, None, f"Unauthorized: {required_role} role required", 403)
             return f(*args, **kwargs)
         return decorated_function

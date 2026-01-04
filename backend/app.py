@@ -74,9 +74,12 @@ def create_app():
                 email='admin@kletech.ac.in',
                 password_hash=hash_password('admin123'),
                 full_name='System Administrator',
-                role='issuer'
+                role='admin'
             )
             db.session.add(admin)
+            db.session.commit()
+        elif admin.role == 'issuer':
+            admin.role = 'admin'
             db.session.commit()
 
         # Sync Faculty Admins from Contineo
@@ -95,7 +98,7 @@ def create_app():
                             email=faculty.get("email"),
                             password_hash=hash_password(faculty.get("password", "password123")),
                             full_name=f"{faculty.get('first_name')} {faculty.get('last_name')}",
-                            role='issuer'
+                            role='admin'
                         )
                         db.session.add(new_fac_admin)
             db.session.commit()

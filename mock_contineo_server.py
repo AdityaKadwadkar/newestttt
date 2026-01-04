@@ -164,14 +164,26 @@ def upload_data():
             file = request.files['students_file']
             if file.filename:
                 df = pd.read_csv(file)
-                STUDENTS = df.to_dict(orient='records')
+                records = df.to_dict(orient='records')
+                # Ensure every student has a password field (default to date_of_birth if exists, else '123')
+                for r in records:
+                    if 'password_dob' not in r:
+                        r['password_dob'] = r.get('date_of_birth', '2000-01-01')
+                STUDENTS = records
         
         # 2. Faculty
         if 'faculty_file' in request.files:
             file = request.files['faculty_file']
             if file.filename:
                 df = pd.read_csv(file)
-                FACULTY = df.to_dict(orient='records')
+                records = df.to_dict(orient='records')
+                # Ensure every faculty has a password and is_admin field
+                for r in records:
+                    if 'password' not in r:
+                        r['password'] = 'password123'
+                    if 'is_admin' not in r:
+                        r['is_admin'] = True # Default to True for mock faculty uploads to keep them as admins
+                FACULTY = records
         
         # 3. Courses
         if 'courses_file' in request.files:

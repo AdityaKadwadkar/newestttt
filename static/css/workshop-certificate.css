@@ -1,0 +1,150 @@
+.hackathon-certificate-wrapper {
+    background: white;
+    padding: 60px 80px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    position: relative;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .hackathon-certificate-wrapper {
+        padding: 40px 20px;
+        min-height: auto;
+    }
+
+    .certificate-title {
+        font-size: 32px !important;
+    }
+
+    .certificate-student-name {
+        font-size: 28px !important;
+        margin: 20px 0 !important;
+    }
+
+    .certificate-reason {
+        font-size: 16px !important;
+    }
+
+    .certificate-signatures {
+        flex-direction: column;
+        gap: 30px;
+    }
+}
+
+.workshop-certificate-wrapper {
+    background: #fafaf9;
+    padding: 50px;
+    border: 20px solid #78350f;
+    position: relative;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    color: #444;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .workshop-certificate-wrapper {
+        padding: 30px 15px;
+        border-width: 10px;
+    }
+
+    .workshop-title {
+        font-size: 32px !important;
+    }
+
+    .workshop-student-name {
+        font-size: 28px !important;
+    }
+
+    .workshop-info {
+        font-size: 18px !important;
+    }
+
+    .workshop-signatures {
+        flex-direction: column;
+        gap: 30px;
+        align-items: center;
+    }
+}
+
+.workshop-certificate-border {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    border: 1px solid #d97706;
+    pointer-events: none;
+}
+
+.workshop-title {
+    font-size: 48px;
+    color: #92400e;
+    margin-bottom: 20px;
+    font-family: 'Garamond', serif;
+    font-weight: bold;
+}
+
+.workshop-award-text {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.workshop-student-name {
+    font-size: 40px;
+    font-weight: bold;
+    color: #78350f;
+    margin: 20px 0;
+    font-family: 'Brush Script MT', cursive;
+}
+
+.workshop-info {
+    font-size: 22px;
+    line-height: 1.6;
+    margin: 30px 0;
+}
+
+.workshop-name {
+    font-weight: bold;
+    color: #92400e;
+}
+
+.workshop-meta {
+    font-size: 16px;
+    color: #666;
+    margin-top: 20px;
+}
+
+.workshop-signatures {
+    margin-top: 60px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.workshop-signature {
+    width: 220px;
+}
+
+.workshop-signature-line {
+    border-top: 1px solid #444;
+    margin-bottom: 8px;
+}
+
+.workshop-signature-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.workshop-signature-title {
+    font-size: 14px;
+    color: #666;
+}

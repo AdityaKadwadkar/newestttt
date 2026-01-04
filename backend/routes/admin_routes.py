@@ -1,0 +1,404 @@
+"""
+Admin/Issuer API Routes
+"""
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from backend.models import db, Admin, CredentialBatch, Credential, CredentialRequest
+from backend.services.credential_service import CredentialService
+from backend.utils.helpers import verify_password, create_response, parse_filter_criteria, json_response, role_required
+from datetime import datetime
+import json
+
+bp = Blueprint('admin', __name__)
+
+@bp.route('/login', methods=['POST'])
+def login():
+    """Admin login"""
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        return json_response(False, None, "Username and password required", 400)
+    
+    admin = Admin.query.filter_by(username=username).first()
+    
+    if not admin or not verify_password(admin.password_hash, password):
+        return json_response(False, None, "Invalid credentials", 401)
+    
+    if not admin.is_active:
+        return json_response(False, None, "Account is inactive", 403)
+    
+    # Update last login
+    admin.last_login = datetime.utcnow()
+    db.session.commit()
+    
+    # Create access token
+    access_token = create_access_token(
+        identity=admin.admin_id,
+        additional_claims={"role": "admin", "username": admin.username}
+    )
+    
+    return json_response(True, {
+        "token": access_token,
+        "admin": {
+            "admin_id": admin.admin_id,
+            "username": admin.username,
+            "full_name": admin.full_name,
+            "email": admin.email
+        }
+    }, "Login successful")
+
+@bp.route('/profile', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_profile():
+    """Get admin profile"""
+    admin_id = get_jwt_identity()
+    admin = Admin.query.get(admin_id)
+    
+    if not admin:
+        return json_response(False, None, "Admin not found", 404)
+    
+    return json_response(True, {
+        "admin_id": admin.admin_id,
+        "username": admin.username,
+        "full_name": admin.full_name,
+        "email": admin.email,
+        "role": admin.role
+    })
+
+@bp.route('/students/filter', methods=['POST'])
+@jwt_required()
+@role_required('admin')
+def filter_students():
+    """Filter students based on criteria"""
+    data = request.get_json()
+    filters = parse_filter_criteria(data)
+    
+    students = CredentialService.filter_students(filters)
+    
+    return json_response(True, {
+        "students": students,
+        "count": len(students)
+    })
+
+@bp.route('/credential/batch/preview', methods=['POST'])
+@jwt_required()
+@role_required('admin')
+def preview_batch():
+    """Preview credential batch before issuing"""
+    data = request.get_json()
+    filters = parse_filter_criteria(data)
+    credential_type = data.get('credential_type')
+    
+    # Extract markscard_semester if applicable
+    markscard_semester = data.get('markscard_semester')
+    additional_data = None
+    if credential_type == "markscard" and markscard_semester:
+        additional_data = {"semester": markscard_semester}
+    
+    students = CredentialService.filter_students(filters)
+    
+    # Generate preview for first student
+    preview = None
+    if students:
+        student_data = CredentialService.get_student_data_for_credential(
+            students[0]["student_id"],
+            credential_type,
+            additional_data=additional_data
+        )
+        if student_data:
+            from backend.utils.vc_generator import VCGenerator
+            vc_result = VCGenerator.generate_full_vc(
+                student_data,
+                credential_type,
+                {"name": "Preview", "issuer_id": get_jwt_identity()},
+                credential_metadata=data.get('metadata')
+            )
+            preview = vc_result["credential"]
+    
+    return json_response(True, {
+        "student_count": len(students),
+        "preview": preview,
+        "students": students[:10]  # First 10 for preview
+    })
+
+@bp.route('/credential/batch/create', methods=['POST'])
+@jwt_required()
+@role_required('admin')
+def create_batch():
+    """Create credential batch"""
+    admin_id = get_jwt_identity()
+    data = request.get_json()
+    
+    credential_type = data.get('credential_type')
+    filters = parse_filter_criteria(data)
+    issuer_info = {
+        "name": data.get('issuer_name', 'KLE Technological University'),
+        "notes": data.get('additional_notes', ''),
+        "issuer_id": admin_id,
+        "credential_metadata": data.get('metadata')
+    }
+    
+    if not credential_type:
+        return json_response(False, None, "Credential type required", 400)
+
+    # For markscard credentials, accept course list + header info (exam_session, program, father/mother)
+    additional_data = None
+    if credential_type == "markscard":
+        markscard_semester = data.get("markscard_semester")
+        if not markscard_semester:
+            return json_response(False, None, "Semester for markscard is required", 400)
+        try:
+            sem_val = int(markscard_semester)
+            if not (1 <= sem_val <= 8):
+                raise ValueError()
+        except:
+            return json_response(False, None, "Invalid semester value (1-8 required)", 400)
+            
+        # Consolidate all markscard specific info into credential_metadata
+        if not issuer_info.get("credential_metadata") or not isinstance(issuer_info["credential_metadata"], dict):
+            issuer_info["credential_metadata"] = {}
+            
+        issuer_info["credential_metadata"].update({
+            "semester": markscard_semester,
+            "program": data.get("program"),
+            "father_or_mother_name": data.get("father_or_mother_name"),
+            "exam_session": data.get("exam_session"),
+            "courses": data.get("courses") or []
+        })
+        
+        additional_data = issuer_info["credential_metadata"]
+    
+    try:
+        batch, students = CredentialService.create_batch(
+            credential_type,
+            admin_id,
+            filters,
+            issuer_info
+        )
+        
+        return json_response(True, {
+            "batch_id": batch.batch_id,
+            "total_students": len(students),
+            "status": batch.status,
+            "courses_used": additional_data.get("courses") if additional_data else None
+        }, "Batch created successfully")
+        
+    except Exception as e:
+        return json_response(False, None, str(e), 500)
+
+@bp.route('/credential/batch/process/<batch_id>', methods=['POST'])
+@jwt_required()
+@role_required('admin')
+def process_batch(batch_id):
+    """Process credential batch"""
+    try:
+        data = request.get_json(silent=True) or {}
+
+        additional_data = None
+        # Allow passing markscard course/header info at processing time as well
+        if data.get("credential_type") == "markscard" or data.get("courses"):
+            additional_data = {
+                "courses": data.get("courses") or [],
+                "program": data.get("program"),
+                "father_or_mother_name": data.get("father_or_mother_name"),
+                "exam_session": data.get("exam_session"),
+            }
+
+        success, message = CredentialService.process_batch(batch_id, additional_data=additional_data)
+        
+        if success:
+            batch = CredentialBatch.query.get(batch_id)
+            return json_response(True, {
+                "batch_id": batch_id,
+                "status": batch.status,
+                "processed": batch.processed_count,
+                "success": batch.success_count,
+                "failed": batch.failed_count
+            }, message)
+        else:
+            return json_response(False, None, message, 404)
+            
+    except Exception as e:
+        return json_response(False, None, str(e), 500)
+
+@bp.route('/credential/batches', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_batches():
+    """Get all credential batches"""
+    batches = CredentialBatch.query.order_by(CredentialBatch.created_at.desc()).all()
+    
+    batch_list = []
+    for batch in batches:
+        batch_list.append({
+            "batch_id": batch.batch_id,
+            "credential_type": batch.credential_type,
+            "total_students": batch.total_students,
+            "processed_count": batch.processed_count,
+            "success_count": batch.success_count,
+            "failed_count": batch.failed_count,
+            "status": batch.status,
+            "created_at": batch.created_at.isoformat() if batch.created_at else None
+        })
+    
+    return json_response(True, {"batches": batch_list})
+
+@bp.route('/credential/batch/<batch_id>', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_batch_details(batch_id):
+    """Get batch details"""
+    batch = CredentialBatch.query.get(batch_id)
+    
+    if not batch:
+        return json_response(False, None, "Batch not found", 404)
+    
+    return json_response(True, {
+        "batch_id": batch.batch_id,
+        "credential_type": batch.credential_type,
+        "template_version": batch.template_version,
+        "issue_date": batch.issue_date.isoformat() if batch.issue_date else None,
+        "issuer_name": batch.issuer_name,
+        "total_students": batch.total_students,
+        "processed_count": batch.processed_count,
+        "success_count": batch.success_count,
+        "failed_count": batch.failed_count,
+        "status": batch.status,
+        "created_at": batch.created_at.isoformat() if batch.created_at else None,
+        "completed_at": batch.completed_at.isoformat() if batch.completed_at else None
+    })
+
+@bp.route('/credential/<credential_id>', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_credential(credential_id):
+    """Get full credential details including raw VC JSON (Admin only)"""
+    # Admin access is already verified by global @jwt_required() and role claim check if needed, 
+    # but strictly speaking any valid JWT here is likely an admin one if using admin login.
+    # We can assume if they are hitting admin_routes, they are authorized as admin.
+    
+    credential = Credential.query.get(credential_id)
+    
+    if not credential:
+        return json_response(False, None, "Credential not found", 404)
+    
+    try:
+        vc_data = json.loads(credential.vc_json)
+    except:
+        vc_data = {}
+
+    return json_response(True, {
+        "credential_id": credential.credential_id,
+        "credential_type": credential.credential_type,
+        "vc_data": vc_data, # Full raw data for Admin
+        "proof_signature": credential.proof_signature,
+        "issued_date": credential.issued_date.isoformat() if credential.issued_date else None,
+        "issuer_name": credential.issuer_name,
+        "did_identifier": credential.did_identifier,
+        "is_revoked": credential.is_revoked
+    })
+
+@bp.route('/requests', methods=['GET'])
+@jwt_required()
+@role_required('admin')
+def get_requests():
+    """Get all credential requests for the logged-in admin"""
+    admin_id = get_jwt_identity()
+    requests = CredentialRequest.query.filter_by(admin_id=admin_id).order_by(CredentialRequest.created_at.desc()).all()
+    return json_response(True, [r.to_dict() for r in requests])
+
+@bp.route('/request/<request_id>/status', methods=['POST'])
+@jwt_required()
+@role_required('admin')
+def update_request_status(request_id):
+    """Approve or reject a request"""
+    admin_id = get_jwt_identity()
+    data = request.get_json()
+    
+    status = data.get('status')
+    remarks = data.get('remarks')
+    
+    if status not in ['approved', 'rejected', 'issued']:
+        return json_response(False, None, "Invalid status. Use 'approved', 'rejected' or 'issued'", 400)
+    
+    req = CredentialRequest.query.filter_by(request_id=request_id, admin_id=admin_id).first()
+    if not req:
+        return json_response(False, None, "Request not found", 404)
+    
+    if status == 'issued':
+        # Generate Credential
+        try:
+            # Parse request details
+            additional_data = {}
+            if req.request_details:
+                import json
+                try:
+                    additional_data = json.loads(req.request_details)
+                except:
+                    pass
+            
+            # Issuer Info
+            admin = Admin.query.get(admin_id)
+            issuer_info = {
+                "issuer_id": admin_id,
+                "name": admin.full_name or "Admin",
+                "issuer_name": admin.full_name or "Admin"
+            }
+            
+            # Generate
+            credential, error = CredentialService.generate_credential_for_student(
+                req.student_id,
+                req.credential_type,
+                req.request_id, # Using request_id as batch_id/reference
+                issuer_info,
+                additional_data=additional_data
+            )
+
+            if not credential:
+                return json_response(False, None, f"Failed to issue credential: {error}", 500)
+            
+            req.status = 'issued'
+            req.admin_remarks = remarks or "Credential Issued Successfully"
+            db.session.commit()
+            
+            return json_response(True, req.to_dict(), "Credential issued successfully")
+
+        except Exception as e:
+            return json_response(False, None, f"Error issuing credential: {str(e)}", 500)
+
+    else:
+        req.status = status
+        req.admin_remarks = remarks
+        db.session.commit()
+    
+    return json_response(True, req.to_dict(), f"Request {status} successfully")
+
+@bp.route('/credential/<credential_id>/revoke', methods=['POST'])
+@jwt_required()
+@role_required('admin')
+def revoke_credential(credential_id):
+    """Revoke a credential"""
+    data = request.get_json()
+    reason = data.get('reason', 'Administrative decision')
+    
+    credential = Credential.query.get(credential_id)
+    if not credential:
+        return json_response(False, None, "Credential not found", 404)
+    
+    if credential.is_revoked:
+        return json_response(False, None, "Credential is already revoked", 400)
+    
+    credential.is_revoked = True
+    credential.revocation_reason = reason
+    credential.revoked_date = datetime.utcnow()
+    
+    db.session.commit()
+    
+    return json_response(True, {
+        "credential_id": credential_id,
+        "is_revoked": True,
+        "revocation_reason": reason
+    }, "Credential revoked successfully")

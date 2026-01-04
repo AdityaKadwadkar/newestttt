@@ -1,0 +1,115 @@
+.markscard-wrapper {
+    background: white;
+    padding: 30px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.markscard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.markscard-logo-box {
+    width: 140px;
+    height: 80px;
+    background: #b91c1c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 28px;
+}
+
+.markscard-title-block {
+    text-align: center;
+    flex: 1;
+}
+
+.markscard-title-block h1 {
+    font-size: 22px;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+}
+
+.markscard-title-block h2 {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.markscard-title-block h3 {
+    font-size: 18px;
+    margin-top: 8px;
+}
+
+.markscard-photo-box {
+    width: 120px;
+    height: 120px;
+    border: 1px solid #ccc;
+    background: #f9fafb;
+}
+
+.markscard-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 4px 24px;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.markscard-meta-row {
+    display: flex;
+}
+
+.markscard-meta-label {
+    width: 110px;
+    font-weight: 600;
+}
+
+.markscard-meta-value {
+    flex: 1;
+}
+
+.markscard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+.markscard-table th,
+.markscard-table td {
+    border: 1px solid #000;
+    padding: 6px 8px;
+    text-align: left;
+}
+
+.markscard-table th {
+    text-align: center;
+    font-weight: 600;
+}
+
+.markscard-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.markscard-sgpa-box {
+    border: 1px solid #000;
+    padding: 8px 12px;
+}
+
+.markscard-actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+

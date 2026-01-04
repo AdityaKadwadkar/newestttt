@@ -1,0 +1,226 @@
+﻿
+  // src/routes/studentRou
+tes.js
+  const express = 
+require('express');
+  const router = 
+express.Router();
+  const multer = 
+require('multer');
+  const { Pool } = 
+require('pg');
+  const pool = require('..
+/config/database').pool;
+  
+  const upload = multer({ 
+storage: 
+multer.memoryStorage() });
+  
+  function 
+parseCSV(buffer, 
+requiredHeaders) {
+    const text = buffer.to
+String('utf8').trim();
+    const [headerLine, 
+...lines] = 
+text.split(/\r?\n/);
+    const headers = header
+Line.split(',').map(h => 
+h.trim());
+  
+    const missing = 
+requiredHeaders.filter(h 
+=> !headers.includes(h));
+    if (missing.length > 
+0) {
+      throw new 
+Error(`Missing required 
+columns: 
+${missing.join(', ')}`);
+    }
+  
+    return lines
+      .filter(l => 
+l.trim())
+      .map(line => {
+        const values = 
+line.split(',');
+        const row = {};
+        
+headers.forEach((h, i) => 
+(row[h] = (values[i] || 
+'').trim()));
+        return row;
+      });
+  }
+  
+  const STUDENT_COLS = [
+>   'student_id', 
+'first_name', 
+'last_name', 'email', 
+'phone',
+    'date_of_birth', 
+'enrollment_date', 
+'department', 
+'batch_year',
+    'division', 
+'section', 
+'course_enrolled', 
+'current_semester'
+  ];
+  
+  router.post('/upload/stu
+dents', 
+upload.single('file'), 
+async (req, res) => {
+    try {
+      if (!req.file) 
+return 
+res.status(400).json({ 
+success: false, message: 
+'No file uploaded' });
+  
+      let rows;
+      try {
+        rows = 
+parseCSV(req.file.buffer, 
+STUDENT_COLS);
+      } catch (e) {
+        return 
+res.status(400).json({ 
+success: false, message: 
+e.message });
+      }
+  
+      for (const r of 
+rows) {
+        await pool.query(
+          `INSERT INTO 
+STUDENT
+>          (student_id, 
+first_name, last_name, 
+email, phone, 
+date_of_birth, 
+enrollment_date, 
+department, batch_year, 
+division, section, 
+course_enrolled, 
+current_semester, 
+password_dob, updated_at)
+           VALUES ($1, 
+$2, $3, $4, $5, $6, $7, 
+$8, $9, $10, $11, $12, 
+$13, $14, 
+CURRENT_TIMESTAMP)`,
+          [
+            r.student_id,
+>           r.first_name,
+            r.last_name,
+            r.email,
+            r.phone,
+            
+r.date_of_birth || null,
+            
+r.enrollment_date || null,
+            r.department,
+            
+parseInt(r.batch_year) || 
+null,
+            r.division,
+            r.section,
+            
+r.course_enrolled,
+            parseInt(r.cur
+rent_semester) || null,
+            
+r.password_dob || 
+r.date_of_birth || null
+          ]
+        );
+      }
+  
+      
+res.status(200).json({ 
+success: true, inserted: 
+rows.length });
+    } catch (err) {
+      
+console.error('Upload 
+students error:', err);
+      
+res.status(500).json({ 
+success: false, inserted: 
+0, message: err.message 
+});
+    }
+  });
+  
+  router.get('/students', 
+async (req, res) => {
+    try {
+      const 
+includePassword = 
+req.query.includePassword 
+=== 'true';
+      const queryText = 
+includePassword
+        ? 'SELECT * FROM 
+STUDENT ORDER BY 
+student_id'
+>       : 'SELECT 
+student_id, first_name, 
+last_name, email, phone, 
+date_of_birth, 
+enrollment_date, 
+department, batch_year, 
+division, section, 
+course_enrolled, 
+current_semester, year, 
+semester, status, 
+created_at, updated_at 
+FROM STUDENT ORDER BY 
+student_id';
+  
+      // Note: year, 
+semester, status columns 
+were added by migrations, 
+so we include them if 
+they exist.
+      // However, to be 
+safe and avoid "column 
+does not exist" before 
+migration, let's stick to 
+SELECT * and remove 
+password_dob in JS if not 
+requested.
+  
+      const result = 
+await pool.query('SELECT 
+* FROM STUDENT ORDER BY 
+student_id');
+      const students = 
+result.rows.map(s => {
+        if 
+(!includePassword) {
+          const { 
+password_dob, ...rest } = 
+s;
+          return rest;
+        }
+        return s;
+      });
+      res.json({ success: 
+true, data: students });
+    } catch (err) {
+      console.error('Get 
+students error:', err);
+      
+res.status(500).json({ 
+success: false, message: 
+err.message });
+    }
+  });
+  
+  module.exports = router;
+
+

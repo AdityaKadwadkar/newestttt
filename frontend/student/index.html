@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal - KLE Tech Digital Credentials</title>
+    <link rel="stylesheet" href="/static/css/shared.css">
+    <link rel="stylesheet" href="/static/css/student.css">
+    <link rel="stylesheet" href="/static/css/hackathon-certificate.css">
+    <link rel="stylesheet" href="/static/css/workshop-certificate.css">
+    <link rel="stylesheet" href="/static/css/course-completion.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        .login-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--border-glass);
+            color: var(--muted-text);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition-smooth);
+        }
+
+        .tab-btn:hover {
+            color: var(--light-text);
+            background: var(--bg-glass);
+        }
+
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 20px rgba(0, 112, 243, 0.3);
+        }
+
+        .welcome-header {
+            margin-bottom: 40px;
+        }
+
+        .welcome-header h2 {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+
+        .welcome-header p {
+            color: var(--muted-text);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar hidden" id="mainNav">
+        <div class="container nav-content">
+            <a href="/" class="nav-brand">🏛️ KLE<span>Tech</span></a>
+            <div class="nav-menu">
+                <a href="/student" class="nav-item active">Dashboard</a>
+                <a href="#" class="nav-item" onclick="setCredentialMode('requests')">Requests</a>
+                <a href="#" class="nav-item" onclick="logout()">Logout</a>
+            </div>
+            <div class="nav-actions">
+                <div class="notification-center" style="position: relative;">
+                    <button class="notification-bell-btn" onclick="toggleNotifications(event)">
+                        🔔 <span class="notification-badge hidden" id="notifBadge">0</span>
+                    </button>
+                    <div class="notification-dropdown" id="notifDropdown">
+                        <div class="notif-header">
+                            <h3>Notifications</h3>
+                            <span class="notif-clear" onclick="clearNotifications()">Clear All</span>
+                        </div>
+                        <div class="notif-list" id="notifList">
+                            <div class="notif-empty">No new notifications</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="avatar" id="navAvatar">ST</div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="loginPage" class="login-container">
+        <div class="login-card card">
+            <h1 class="hero" style="padding: 0; margin-bottom: 24px; font-size: 28px;">Student Access</h1>
+            <div id="loginErrorContainer"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Student ID</label>
+                    <input type="text" class="form-input" id="studentId" required placeholder="e.g., STU001">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password (Date of Birth)</label>
+                    <input type="password" class="form-input" id="loginPassword" required placeholder="YYYY-MM-DD">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+            </form>
+            <p class="text-center mt-20" style="color: var(--muted-text); font-size: 13px;">
+                Password format: YYYY-MM-DD<br>
+                <code
+                    style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; margin-top: 8px; display: inline-block;">STU001</code>
+            </p>
+            <p class="text-center mt-20">
+                <a href="/" class="nav-link" style="color: var(--primary-color); font-size: 14px;">← Return to Main
+                    Page</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="dashboardPage" class="hidden">
+        <div class="container" style="padding-top: 40px; padding-bottom: 80px;">
+            <div class="dashboard-header"
+                style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <h1 class="dashboard-title" style="margin: 0;">Student Dashboard</h1>
+                <div class="welcome-text" style="color: var(--muted-text);">Welcome, <span id="studentName"
+                        style="color: #4facfe; font-weight: 700;"></span></div>
+            </div>
+
+            <!-- Tab Navigation (Restored original concept) -->
+            <div class="tabs" style="margin-bottom: 32px;">
+                <button id="tab-dashboard" class="tab-btn active" onclick="setCredentialMode('dashboard')">🏠
+                    Dashboard</button>
+                <button id="tab-view" class="tab-btn" onclick="setCredentialMode('view')">👁️ View</button>
+                <button id="tab-share" class="tab-btn" onclick="setCredentialMode('share')">🔗 Share / QR</button>
+                <button id="tab-download" class="tab-btn" onclick="setCredentialMode('download')">📥 Download</button>
+                <button id="tab-requests" class="tab-btn" onclick="setCredentialMode('requests')">📝 Requests</button>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- Recent Credential Hero Card -->
+                <div class="hero-card card" id="recentCredentialCard">
+                    <div class="hero-content">
+                        <p class="hero-subtitle">Latest Achievement:</p>
+                        <h2 class="hero-title" id="heroCredTitle">No Credentials Yet</h2>
+                        <p class="hero-description" id="heroCredDesc">Your most recently issued verifiable credential
+                            will appear here for quick access.</p>
+
+                        <div class="hero-actions">
+                            <button class="btn btn-primary" onclick="setCredentialMode('view')">View All
+                                Records</button>
+                            <button class="btn btn-outline" onclick="setCredentialMode('share')">Verification
+                                Dashboard</button>
+                        </div>
+                    </div>
+                    <div class="hero-icon-box">
+                        <div class="medal-glow"></div>
+                        <span class="medal-icon">🥇</span>
+                    </div>
+                </div>
+
+                <!-- Feature Grid (Existing Functionality Only) -->
+                <div class="feature-grid">
+                    <div class="feature-card card" onclick="setCredentialMode('requests')">
+                        <div class="feature-icon">📄</div>
+                        <h3>Request Transcript</h3>
+                        <p>Formal requests for marks cards and consolidated transcripts.</p>
+                        <div class="btn-text">Submit Request ➔</div>
+                    </div>
+                    <div class="feature-card card" onclick="setCredentialMode('share')">
+                        <div class="feature-icon">🔗</div>
+                        <h3>Share & Verify</h3>
+                        <p>Generate secure, time-limited verification links and QR codes.</p>
+                        <div class="btn-text">Manage Links ➔</div>
+                    </div>
+                    <div class="feature-card card" onclick="setCredentialMode('view')">
+                        <div class="feature-icon">📚</div>
+                        <h3>All Credentials</h3>
+                        <p>View, filter, and export all your issued academic certifications.</p>
+                        <div class="btn-text">Access Vault ➔</div>
+                    </div>
+                </div>
+
+                <!-- Credentials list area -->
+                <div id="credentialsList" class="credentials-grid hidden">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Requests View -->
+                <div id="requestsView" class="hidden">
+                    <div class="grid">
+                        <div class="card">
+                            <h3 style="margin-bottom: 24px;">Submit New Request</h3>
+                            <form id="requestForm">
+                                <div class="form-group">
+                                    <label class="form-label">Authority</label>
+                                    <select id="requestAdminId" class="form-select" required>
+                                        <option value="">-- Select Authority --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <select id="requestType" class="form-select" required>
+                                        <option value="">-- Select Type --</option>
+                                        <option value="markscard">Grade Card</option>
+                                        <option value="transcript">Transcript</option>
+                                        <option value="course_completion">Course Completion</option>
+                                        <option value="workshop">Workshop Certificate</option>
+                                        <option value="hackathon">Hackathon Certificate</option>
+                                    </select>
+                                </div>
+                                <div id="dynamicRequestFields"></div>
+                                <div class="form-group">
+                                    <label class="form-label">Purpose</label>
+                                    <textarea id="requestReason" class="form-input" rows="2"
+                                        placeholder="Briefly explain..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit
+                                    Request</button>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h3 style="margin-bottom: 24px;">Request Status</h3>
+                            <div id="requestHistoryList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credential Modal -->
+    <div id="credentialModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()" style="color: var(--muted-text);">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/shared.js"></script>
+    <script src="/static/js/student.js"></script>
+</body>
+
+</html>

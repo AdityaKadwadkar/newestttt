@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Academic Transcript</title>
+    <style>
+        body { margin: 0; padding: 0; background: #fff; }
+        .transcript-wrapper {
+            background: white;
+            padding: 40px;
+            font-family: Arial, sans-serif;
+            color: #000;
+            line-height: 1.4;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .transcript-header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            margin-bottom: 30px;
+        }
+        .kle-logo {
+            width: 140px;
+            height: 80px;
+            background: #b91c1c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 28px;
+            margin-right: 20px;
+        }
+        .header-text {
+            flex: 1;
+            text-align: center;
+        }
+        .header-text h1 {
+            font-size: 26px;
+            margin: 0;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .header-text h2 {
+            font-size: 22px;
+            margin: 8px 0;
+            font-weight: normal;
+        }
+        .header-text h3 {
+            font-size: 18px;
+            margin: 0;
+            font-weight: normal;
+        }
+        .student-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 60px;
+            margin: 40px 0;
+            font-size: 15px;
+        }
+        .detail-item {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+        }
+        .detail-label {
+            width: 180px;
+            color: #555;
+        }
+        .detail-value {
+            font-weight: bold;
+            color: #000;
+        }
+        .semester-container {
+            margin-top: 30px;
+        }
+        .semester-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin: 25px 0 10px 0;
+            border-bottom: 2px solid #000;
+            display: inline-block;
+            padding-right: 20px;
+        }
+        .semester-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        .semester-table th, .semester-table td {
+            border: 1px solid #000;
+            padding: 8px 10px;
+            text-align: left;
+        }
+        .semester-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+            text-align: center;
+        }
+        .text-center { text-align: center !important; }
+        .aggregation-section {
+            margin-top: 40px;
+            font-size: 15px;
+            border: 1px solid #000;
+            padding: 15px;
+            display: inline-block;
+            min-width: 400px;
+        }
+        .aggregation-row {
+            margin-bottom: 8px;
+        }
+        .footer-section {
+            margin-top: 60px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="transcript-wrapper">
+        <div class="transcript-header">
+            <div class="kle-logo">KLE</div>
+            <div class="header-text">
+                <h1>KLE TECHNOLOGICAL UNIVERSITY</h1>
+                <h2>Academic Transcript</h2>
+                <h3>Autonomous Institution</h3>
+            </div>
+        </div>
+
+        <div class="student-details">
+            <div class="detail-item">
+                <span class="detail-label">Student Name:</span>
+                <span class="detail-value">${studentName}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">USN / Student ID:</span>
+                <span class="detail-value">${usn}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Program:</span>
+                <span class="detail-value">${program}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Branch:</span>
+                <span class="detail-value">${branch}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Batch Year:</span>
+                <span class="detail-value">${batchYear}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Year of Completion:</span>
+                <span class="detail-value">${yearOfCompletion}</span>
+            </div>
+        </div>
+
+        <div id="semesters-content">
+            ${semestersHtml}
+        </div>
+
+        <div class="aggregation-section">
+            <div class="aggregation-row">Total Credits Earned: <strong>${totalCredits}</strong></div>
+            <div class="aggregation-row">CGPA: <strong>${cgpa}</strong></div>
+            <div class="aggregation-row">CGPA (in words): <strong>${cgpaInWords}</strong></div>
+            <div class="aggregation-row">Result Class: <strong>${resultClass}</strong></div>
+        </div>
+
+        <div class="footer-section">
+            <div>Date of Issue: ${dateOfIssue}</div>
+            <div>Issued by: KLE Technological University</div>
+        </div>
+    </div>
+</body>
+</html>

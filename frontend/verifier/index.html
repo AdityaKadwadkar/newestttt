@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifier - KLE Tech Digital Credentials</title>
+    <link rel="stylesheet" href="/static/css/shared.css">
+    <link rel="stylesheet" href="/static/css/verifier.css">
+    <link rel="stylesheet" href="/static/css/hackathon-certificate.css">
+    <link rel="stylesheet" href="/static/css/workshop-certificate.css">
+    <link rel="stylesheet" href="/static/css/course-completion.css">
+    <link rel="stylesheet" href="/static/css/markscard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        .verification-hero {
+            text-align: center;
+            padding: 80px 20px;
+            background: radial-gradient(circle at center, rgba(0, 112, 243, 0.1) 0%, transparent 70%);
+        }
+
+        .verification-hero h1 {
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin-bottom: 16px;
+        }
+
+        .verification-tabs {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--border-glass);
+            color: var(--muted-text);
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition-smooth);
+        }
+
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 30px rgba(0, 112, 243, 0.4);
+        }
+
+        .qr-scanner-container {
+            border: 2px dashed var(--border-glass);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            background: var(--bg-glass);
+        }
+
+        #qrReader {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="/" class="nav-brand">🏛️ KLE<span>Tech</span></a>
+            <div class="nav-menu">
+                <a href="/" class="nav-item">Home</a>
+                <a href="/verifier" class="nav-item active">Verifier</a>
+                <a href="/student" class="nav-item">Student Portal</a>
+            </div>
+            <div class="nav-user">
+                <a href="/student" class="btn btn-primary" style="padding: 8px 16px; font-size: 13px;">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="verification-hero">
+        <div class="container">
+            <h1>Trust, <span style="color: var(--primary-color);">Verified.</span></h1>
+            <p style="font-size: 18px; color: var(--muted-text); max-width: 600px; margin: 0 auto;">Securely validate
+                digital academic credentials issued by KLE Technological University using blockchain-grade cryptography.
+            </p>
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 800px;">
+        <div class="card" style="padding: 40px;">
+            <div class="verification-tabs">
+                <button class="tab-btn active" id="tab-input" onclick="showVerifyTab('input')">Direct Identity</button>
+                <button class="tab-btn" id="tab-qr" onclick="showVerifyTab('qr')">Optical Scan (QR)</button>
+            </div>
+
+            <!-- Input Tab -->
+            <div id="inputTab" class="tab-content">
+                <div class="form-group">
+                    <label class="form-label">Credential Identity / URL</label>
+                    <input type="text" class="form-input" id="credentialId"
+                        placeholder="Paste verification link or enter credential ID">
+                    <small style="color: var(--muted-text); display: block; margin-top: 12px;">Example:
+                        VC-2024-CSE-001</small>
+                </div>
+                <button class="btn btn-primary" onclick="verifyCredential()"
+                    style="width: 100%; margin-top: 24px;">Initialize Cryptographic Verification</button>
+            </div>
+
+            <!-- QR Tab -->
+            <div id="qrTab" class="tab-content hidden">
+                <div class="qr-scanner-container">
+                    <div id="qrReader"></div>
+                    <p style="margin-top: 24px; font-weight: 600;">Secure Optical Reader Active</p>
+                    <p style="color: var(--muted-text); font-size: 14px; margin-top: 8px;">Align the credential QR code
+                        within the frame for instant discovery.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Result -->
+        <div id="verificationResult" class="hidden" style="margin-top: 40px;">
+            <div class="card" style="border-top: 4px solid var(--success-color);">
+                <div id="resultContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/shared.js"></script>
+    <script src="/static/js/verifier.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</body>
+
+</html>

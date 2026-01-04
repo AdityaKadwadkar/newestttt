@@ -1,0 +1,220 @@
+/* Hackathon Certificate Template Styles */
+
+.hackathon-certificate-wrapper {
+    background: white;
+    padding: 60px 80px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    position: relative;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Green/White Style Variant */
+.hackathon-certificate-wrapper.style-green {
+    border: 3px solid #2d5016;
+}
+
+.hackathon-certificate-wrapper.style-green .certificate-border {
+    border: 2px solid #2d5016;
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    right: 40px;
+    bottom: 40px;
+    pointer-events: none;
+}
+
+.hackathon-certificate-wrapper.style-green .decorative-shape-top-left {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 150px;
+    height: 150px;
+    background: linear-gradient(135deg, #2d5016 0%, #4a7c2a 50%, #6ba84a 100%);
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+    opacity: 0.3;
+}
+
+.hackathon-certificate-wrapper.style-green .decorative-shape-bottom-right {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 150px;
+    height: 150px;
+    background: linear-gradient(135deg, #2d5016 0%, #4a7c2a 50%, #6ba84a 100%);
+    clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    opacity: 0.3;
+}
+
+/* Red/White Style Variant */
+.hackathon-certificate-wrapper.style-red {
+    border: 4px solid #c41e3a;
+}
+
+.hackathon-certificate-wrapper.style-red .certificate-border {
+    border: 3px solid #c41e3a;
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    right: 30px;
+    bottom: 30px;
+    pointer-events: none;
+}
+
+.hackathon-certificate-wrapper.style-red .decorative-shape-top-left {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 120px;
+    height: 120px;
+    background: #c41e3a;
+    opacity: 0.2;
+}
+
+.hackathon-certificate-wrapper.style-red .decorative-shape-bottom-right {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 120px;
+    height: 120px;
+    background: #c41e3a;
+    opacity: 0.2;
+}
+
+.certificate-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    width: 100%;
+    max-width: 800px;
+}
+
+.certificate-title {
+    font-size: 48px;
+    font-weight: bold;
+    color: #1a1a1a;
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+    font-family: 'Georgia', serif;
+}
+
+.certificate-award-text {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+.certificate-student-name {
+    font-size: 42px;
+    font-weight: bold;
+    color: #2d5016;
+    margin: 30px 0;
+    font-style: italic;
+    font-family: 'Georgia', serif;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 8px;
+}
+
+.hackathon-certificate-wrapper.style-red .certificate-student-name {
+    color: #c41e3a;
+}
+
+.certificate-reason {
+    font-size: 20px;
+    color: #333;
+    margin: 30px 0;
+    line-height: 1.6;
+}
+
+.certificate-hackathon-name {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2d5016;
+    margin: 20px 0;
+}
+
+.hackathon-certificate-wrapper.style-red .certificate-hackathon-name {
+    color: #c41e3a;
+}
+
+.certificate-details {
+    font-size: 16px;
+    color: #555;
+    margin: 15px 0;
+    line-height: 1.8;
+}
+
+.certificate-date {
+    font-size: 18px;
+    color: #333;
+    margin: 30px 0;
+    font-style: italic;
+}
+
+.certificate-signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid #ddd;
+}
+
+.certificate-signature {
+    text-align: center;
+    flex: 1;
+    max-width: 250px;
+}
+
+.certificate-signature-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+    font-family: 'Brush Script MT', cursive;
+}
+
+.certificate-signature-title {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.certificate-logo-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+}
+
+.certificate-logo-left,
+.certificate-logo-right {
+    width: 120px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Print styles */
+@media print {
+    .hackathon-certificate-wrapper {
+        box-shadow: none;
+        padding: 40px 60px;
+    }
+    
+    .certificate-border {
+        border-width: 2px !important;
+    }
+}
+
+

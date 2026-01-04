@@ -1,0 +1,91 @@
+.course-completion-wrapper {
+    background: #fff;
+    padding: 60px;
+    border: 15px solid #1e40af;
+    position: relative;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    color: #1f2937;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.course-completion-border {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    border: 2px solid #3b82f6;
+    pointer-events: none;
+}
+
+.course-completion-header h1 {
+    font-size: 42px;
+    color: #1e3a8a;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+
+.course-completion-header h2 {
+    font-size: 24px;
+    color: #3b82f6;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.course-completion-text {
+    font-size: 18px;
+    margin: 20px 0;
+    font-style: italic;
+}
+
+.course-completion-student-name {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1e40af;
+    margin: 20px 0;
+    border-bottom: 2px solid #e5e7eb;
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+.course-completion-course-info {
+    font-size: 22px;
+    margin: 30px 0;
+    line-height: 1.5;
+}
+
+.course-completion-course-name {
+    font-weight: 700;
+    color: #1e3a8a;
+}
+
+.course-completion-details {
+    font-size: 16px;
+    color: #6b7280;
+    margin-top: 20px;
+}
+
+.course-completion-footer {
+    margin-top: 50px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 40px;
+}
+
+.course-completion-sig {
+    border-top: 1px solid #9ca3af;
+    padding-top: 10px;
+    width: 200px;
+}
+
+.sig-name {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.sig-title {
+    font-size: 14px;
+    color: #6b7280;
+}

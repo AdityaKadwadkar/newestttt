@@ -1,0 +1,10 @@
+﻿  } catch (err) {
+    console.error('Upload marks error:', err);
+    res.status(500).json({ success: false, inserted: 0, message: err.message });
+  }
+});
+
+router.get('/marks', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT m.*, s.first_name, s.last_name, c.course_name, c.course_code

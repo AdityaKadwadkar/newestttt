@@ -1,0 +1,12 @@
+﻿      LEFT JOIN STUDENT s ON m.student_id = s.student_id
+      LEFT JOIN COURSE c ON m.course_id = c.course_id
+      ORDER BY m.created_at DESC
+    `);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('Get marks error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+module.exports = router;

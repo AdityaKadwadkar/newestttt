@@ -1,0 +1,131 @@
+﻿// src/routes/marksRoutes.js
+const express = require('express');
+const router = express.Router();
+const multer = require('multer');
+const pool = require('../config/database').pool;
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+function parseCSV(buffer, requiredHeaders) {
+  const text = buffer.toString('utf8').trim();
+  const [headerLine, ...lines] = text.split(/\r?\n/);
+  const headers = headerLine.split(',').map(h => h.trim());
+
+  const missing = requiredHeaders.filter(h => !headers.includes(h));
+  if (missing.length > 0) {
+    throw new Error(`Missing required columns: ${missing.join(', ')}`);
+  }
+
+  return lines
+    .filter(l => l.trim())
+    .map(line => {
+      const values = line.split(',');
+      const row = {};
+      headers.forEach((h, i) => (row[h] = (values[i] || '').trim()));
+      return row;
+    });
+}
+
+const ENROLLMENT_COLS = ['student_id', 'course_id', 'enrollment_date', 'status'];
+const MARKS_COLS = ['student_id', 'course_id', 'semester', 'marks_obtained', 'max_marks', 'grade', 'exam_date', 'exam_type'];
+
+router.post('/upload/enrollments', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+
+    let rows;
+    try {
+      rows = parseCSV(req.file.buffer, ENROLLMENT_COLS);
+    } catch (e) {
+      return res.status(400).json({ success: false, message: e.message });
+    }
+
+    for (const r of rows) {
+      await pool.query(
+        `INSERT INTO STUDENT_COURSE (student_id, course_id, enrollment_date, status)
+         VALUES ($1,$2,$3,$4)`,
+        [
+          r.student_id,
+          r.course_id,
+          r.enrollment_date || null,
+          r.status || 'enrolled'
+        ]
+      );
+    }
+
+    res.json({ success: true, inserted: rows.length });
+  } catch (err) {
+    console.error('Upload enrollments error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/enrollments', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT sc.*, s.first_name, s.last_name, c.course_name, c.course_code 
+      FROM STUDENT_COURSE sc
+      LEFT JOIN STUDENT s ON sc.student_id = s.student_id
+      LEFT JOIN COURSE c ON sc.course_id = c.course_id
+      ORDER BY sc.enrollment_date DESC
+    `);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('Get enrollments error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/upload/marks', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+
+    let rows;
+    try {
+      rows = parseCSV(req.file.buffer, MARKS_COLS);
+    } catch (e) {
+      return res.status(400).json({ success: false, message: e.message });
+    }
+
+    for (const r of rows) {
+      await pool.query(
+        `INSERT INTO MARKS
+         (student_id, course_id, semester, marks_obtained, max_marks, grade, exam_date, exam_type, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8, CURRENT_TIMESTAMP)`,
+        [
+          r.student_id,
+          r.course_id,
+          parseInt(r.semester) || null,
+          parseFloat(r.marks_obtained) || 0,
+          parseFloat(r.max_marks) || 0,
+          r.grade,
+          r.exam_date || null,
+          r.exam_type
+        ]
+      );
+    }
+
+    res.status(200).json({ success: true, inserted: rows.length });
+  } catch (err) {
+    console.error('Upload marks error:', err);
+    res.status(500).json({ success: false, inserted: 0, message: err.message });
+  }
+});
+
+router.get('/marks', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT m.*, s.first_name, s.last_name, c.course_name, c.course_code
+      FROM MARKS m
+      LEFT JOIN STUDENT s ON m.student_id = s.student_id
+      LEFT JOIN COURSE c ON m.course_id = c.course_id
+      ORDER BY m.created_at DESC
+    `);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('Get marks error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+module.exports = router;

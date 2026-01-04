@@ -49,7 +49,11 @@ function renderMarkscardTemplate(data) {
     const gradeCard = data.grade_card || {};
     const header = gradeCard.credentialHeader || {};
     const studentId = header.usn || '-';
-    const studentName = header.student_name || '-';
+    // Use helper if header name is missing/dash, or if header itself is weak
+    const studentName = (header.student_name && header.student_name !== '-')
+        ? header.student_name
+        : getStudentName(data.vc_data?.credentialSubject || {});
+
     const branch = header.branch || '-';
     const program = header.program || '';
     const semester = header.semester || '';
@@ -61,7 +65,7 @@ function renderMarkscardTemplate(data) {
         rowsHtml = courses.map((course, index) => {
             const code = course.course_code || course.courseCode || course.code || '';
             const name = course.course_name || course.courseName || course.name || '';
-            const credits = course.credits || course.credit || '';
+            const credits = course.credits || course.credits === 0 ? course.credits : (course.credit || '');
             const grade = course.grade || '';
             const gpa = course.gpa != null ? course.gpa : (course.gradePoints || course.grade_points || '');
             return `
@@ -129,60 +133,231 @@ function renderTranscriptTemplate(data) {
     const subject = vcData.credentialSubject || vcData || {};
     const semesters = subject.semesters || [];
 
-    const studentName = subject.name || subject.student_name || '-';
+    // Use robust name extraction
+    const studentName = getStudentName(subject);
     const usn = subject.usn || subject.student_id || subject.id || '-';
     const program = subject.program || 'Bachelor of Technology';
     const branch = subject.branch || subject.department || '-';
+    const batchYear = subject.batch_year || subject.year_of_start || '';
 
     let semestersHtml = '';
     semesters.forEach((sem, idx) => {
         let coursesHtml = (sem.courses || []).map((c, i) => `
             <tr>
-                <td>${i + 1}</td>
                 <td>${c.courseCode || c.course_code || ''}</td>
                 <td>${c.courseName || c.course_name || ''}</td>
-                <td style="text-align:center">${c.credits || ''}</td>
+                <td style="text-align:center">${c.credits || c.credits === 0 ? c.credits : ''}</td>
                 <td style="text-align:center">${c.grade || ''}</td>
             </tr>
         `).join('');
 
         semestersHtml += `
-            <div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 10px;">
-                <h4 style="border-bottom: 2px solid #000; display: inline-block;">Semester ${sem.semester || idx + 1}</h4>
-                <table class="markscard-table">
-                    <thead><tr><th>S.No</th><th>Code</th><th>Name</th><th>Credits</th><th>Grade</th></tr></thead>
-                    <tbody>${coursesHtml || '<tr><td colspan="5" style="text-align:center">No records found</td></tr>'}</tbody>
+            <div style="margin-bottom: 20px; border: 1px solid #000; padding: 0;">
+                <div style="background: #fff; padding: 5px 10px; border-bottom: 1px solid #000; text-align: center; font-weight: bold;">
+                    Semester ${sem.semester || idx + 1}
+                </div>
+                <table class="markscard-table" style="margin: 0; border: none;">
+                    <thead>
+                        <tr style="background: #f0f0f0;">
+                            <th style="width: 15%; border-right: 1px solid #000;">Code</th>
+                            <th style="width: 65%; border-right: 1px solid #000;">Course Title</th>
+                            <th style="width: 10%; border-right: 1px solid #000; text-align: center;">Cr</th>
+                            <th style="width: 10%; text-align: center;">Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>${coursesHtml || '<tr><td colspan="4" style="text-align:center">No records</td></tr>'}</tbody>
                 </table>
-                <div style="text-align: right; font-weight: bold; margin-top: 5px;">SGPA: ${sem.sgpa || sem.gpa || '-'}</div>
+                <div style="text-align: right; font-weight: bold; padding: 5px 10px; border-top: 1px solid #000;">
+                    SGPA: ${sem.sgpa || sem.gpa || '-'}
+                </div>
             </div>
         `;
     });
 
     return `
-        <div class="markscard-wrapper" style="color: #000 !important; background: white !important; font-family: serif;">
-            <div style="text-align: center; border-bottom: 2px solid #b91c1c; padding-bottom: 20px; margin-bottom: 20px;">
-                <h1 style="margin:0; font-size: 24px;">KLE TECHNOLOGICAL UNIVERSITY</h1>
-                <h2 style="margin:5px 0; font-size: 18px;">CONSOLIDATED TRANSCRIPT</h2>
+        <div class="markscard-wrapper" style="color: #000 !important; background: white !important; font-family: 'Times New Roman', serif; padding: 40px; max-width: 900px; margin: 0 auto;">
+            <div style="display: flex; align-items: center; margin-bottom: 30px;">
+                <div style="width: 80px; height: 80px; background: #b91c1c; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: sans-serif;">KLE Logo</div>
+                <div style="flex: 1; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase;">KLE Technological University</h1>
+                    <h3 style="margin: 5px 0 0; font-size: 16px; font-weight: normal;">Official Consolidated Academic Transcript</h3>
+                </div>
             </div>
-            <div class="markscard-meta">
-                <div class="markscard-meta-row"><div class="markscard-meta-label">Student:</div><div>${studentName}</div></div>
-                <div class="markscard-meta-row"><div class="markscard-meta-label">USN:</div><div>${usn}</div></div>
-                <div class="markscard-meta-row"><div class="markscard-meta-label">Program:</div><div>${program}</div></div>
-                <div class="markscard-meta-row"><div class="markscard-meta-label">Branch:</div><div>${branch}</div></div>
+
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 30px;">
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold; width: 20%;">Student Name</td>
+                    <td style="padding: 8px; border: 1px solid #000; width: 30%;">${studentName}</td>
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold; width: 20%;">University ID</td>
+                    <td style="padding: 8px; border: 1px solid #000; width: 30%;">${usn}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold;">Program</td>
+                    <td style="padding: 8px; border: 1px solid #000;">${program}</td>
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold;">Branch</td>
+                    <td style="padding: 8px; border: 1px solid #000;">${branch}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold;">Year of Admission</td>
+                    <td style="padding: 8px; border: 1px solid #000;">${batchYear}</td>
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold;">Medium</td>
+                    <td style="padding: 8px; border: 1px solid #000;">English</td>
+                </tr>
+            </table>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                ${semestersHtml}
             </div>
-            <div style="margin-top: 30px;">${semestersHtml}</div>
-            <div style="margin-top: 30px; border: 2px solid #000; padding: 15px; display: inline-block;">
-                <div>Total Credits: ${subject.totalCredits || subject.total_credits || '-'}</div>
-                <div style="font-size: 18px; font-weight: bold;">CGPA: ${subject.cgpa || '-'}</div>
+
+            <div style="margin-top: 30px; border: 1px solid #000; padding: 15px; text-align: center; background: #f9f9f9;">
+                <div style="margin-bottom: 5px;">CGPA</div>
+                <div style="font-size: 24px; font-weight: bold;">${subject.cgpa || '-'}</div>
+                <div style="font-size: 12px; margin-top: 5px;">(Cumulative Grade Point Average)</div>
+            </div>
+            
+            <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end;">
+                 <div style="text-align: center;">
+                    <p style="margin: 0;">Date of Issue: ${formatDateTime(data.vc_data?.issuanceDate)}</p>
+                 </div>
+                 <div style="text-align: center;">
+                    <div style="height: 50px;"></div>
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto;"></div>
+                    <p style="margin: 5px 0 0;">Controller of Examinations</p>
+                 </div>
             </div>
         </div>
     `;
 }
 
-// Placeholder for other templates if needed
-function renderHackathonCertificateTemplate(data) { return `<div class="alert alert-info" style="color:#000">Hackathon Certificate Rendering... (Open Raw JSON for details)</div>`; }
-function renderWorkshopCertificateTemplate(data) { return `<div class="alert alert-info" style="color:#000">Workshop Certificate Rendering... (Open Raw JSON for details)</div>`; }
-function renderCourseCompletionTemplate(data) { return `<div class="alert alert-info" style="color:#000">Course Completion Rendering... (Open Raw JSON for details)</div>`; }
+// ---------------------------------------------------------
+// CERTIFICATE TEMPLATES (Workshop, Hackathon, Course Completion)
+// ---------------------------------------------------------
+
+function getStudentName(subject) {
+    return subject.student_name || subject.name || subject.full_name || subject.fullName ||
+        (subject.first_name ? `${subject.first_name} ${subject.last_name || ''}` : '-') || '-';
+}
+
+function renderHackathonCertificateTemplate(data) {
+    const vcData = data.vc_data || {};
+    const subject = vcData.credentialSubject || vcData || {};
+    const studentName = getStudentName(subject);
+    const hackathonName = subject.hackathon_name || subject.hackathonName || 'Hackathon';
+    const position = subject.position || 'Participant';
+    const date = formatDateTime(subject.participation_date || subject.date);
+
+    return `
+        <div class="certificate-wrapper" style="padding: 40px; text-align: center; border: 10px solid #0070f3; background: #fff; color: #000; font-family: 'Georgia', serif;">
+            <div style="font-size: 30px; font-weight: bold; color: #0070f3; margin-bottom: 10px;">CERTIFICATE</div>
+            <div style="font-size: 18px; letter-spacing: 2px; text-transform: uppercase;">OF ACHIEVEMENT</div>
+            
+            <div style="margin: 40px 0; font-style: italic; color: #555;">This is to certify that</div>
+            
+            <div style="font-size: 36px; font-weight: bold; margin: 20px 0; border-bottom: 2px solid #ddd; display: inline-block; padding: 0 40px 10px;">${studentName}</div>
+            
+            <div style="font-size: 18px; margin: 20px 0; line-height: 1.6;">
+                has successfully participated and secured <br>
+                <strong style="font-size: 22px; color: #000;">${position}</strong> <br>
+                in the event <strong style="color: #0070f3;">${hackathonName}</strong>
+            </div>
+            
+            <div style="margin-top: 50px; display: flex; justify-content: space-between; padding: 0 50px;">
+                <div style="text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto 10px;"></div>
+                    <div style="font-weight: bold;">Organizer</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-weight: bold; font-size: 16px;">${date}</div>
+                    <div style="font-size: 12px; color: #666;">Date</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto 10px;"></div>
+                    <div style="font-weight: bold;">Authority</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderWorkshopCertificateTemplate(data) {
+    const vcData = data.vc_data || {};
+    const subject = vcData.credentialSubject || vcData || {};
+    const studentName = getStudentName(subject);
+    const workshopName = subject.workshop_name || subject.workshopName || 'Workshop';
+    const duration = subject.duration_hours || subject.duration || '0';
+    const date = formatDateTime(subject.completion_date || subject.date);
+
+    return `
+        <div class="certificate-wrapper" style="padding: 40px; text-align: center; border: 10px solid #f59e0b; background: #fff; color: #000; font-family: 'Arial', sans-serif;">
+            <div style="font-size: 40px; font-weight: 900; color: #f59e0b; margin-bottom: 5px;">CERTIFICATE</div>
+            <div style="font-size: 20px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase;">OF PARTICIPATION</div>
+            
+            <div style="margin: 50px 0 20px; font-size: 18px;">PROUDLY PRESENTED TO</div>
+            
+            <div style="font-size: 42px; font-family: 'Georgia', serif; font-weight: bold; margin: 10px 0; color: #333;">${studentName}</div>
+            
+            <div style="margin: 30px auto; max-width: 600px; line-height: 1.6; font-size: 18px; color: #444;">
+                For successfully completing the workshop on <br>
+                <strong style="font-size: 24px; color: #000;">${workshopName}</strong><br>
+                <span style="font-size: 16px; color: #666;">(${duration} Hours Duration)</span>
+            </div>
+            
+            <div style="margin-top: 60px; display: flex; justify-content: space-around;">
+                <div style="text-align: center;">
+                    <div style="font-size: 14px; margin-bottom: 5px;">${date}</div>
+                    <div style="border-top: 2px solid #f59e0b; width: 150px; margin: 0 auto;"></div>
+                    <div style="font-size: 12px; font-weight: bold; margin-top: 5px;">DATE</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-family: 'Great Vibes', cursive; font-size: 24px; margin-bottom: 0px;">KLE Tech</div>
+                    <div style="border-top: 2px solid #f59e0b; width: 150px; margin: 0 auto;"></div>
+                    <div style="font-size: 12px; font-weight: bold; margin-top: 5px;">SIGNATURE</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderCourseCompletionTemplate(data) {
+    const vcData = data.vc_data || {};
+    const subject = vcData.credentialSubject || vcData || {};
+    const studentName = getStudentName(subject);
+    const courseName = subject.course_name || subject.courseName || 'Course';
+    const date = formatDateTime(subject.completion_date || subject.date);
+
+    return `
+        <div class="certificate-wrapper" style="padding: 50px; text-align: center; border: 5px double #02040a; background: #fff; color: #000; font-family: 'Times New Roman', serif;">
+            <div style="width: 100px; height: 100px; margin: 0 auto 20px; border-radius: 50%; background: #02040a; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold;">LOGO</div>
+            <div style="font-size: 48px; font-weight: bold; color: #02040a;">Certificate</div>
+            <div style="font-size: 18px; letter-spacing: 5px; color: #555; margin-bottom: 50px;">OF COMPLETION</div>
+            
+            <div style="font-size: 20px; font-style: italic; color: #666;">This is to certify that</div>
+            
+            <div style="font-size: 38px; font-weight: bold; margin: 30px 0; color: #000; border-bottom: 1px solid #ccc; display: inline-block; min-width: 400px;">${studentName}</div>
+            
+            <div style="font-size: 20px; color: #444; margin-bottom: 20px;">
+                has successfully completed the course
+            </div>
+            
+            <div style="font-size: 32px; font-weight: bold; color: #0070f3; margin-bottom: 40px;">${courseName}</div>
+            
+            <div style="font-size: 16px; color: #555; margin-bottom: 60px;">Given on ${date}</div>
+            
+            <div style="display: flex; justify-content: space-between; padding: 0 60px;">
+                <div style="text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto 10px;"></div>
+                    <div>KLE Tech University</div>
+                    <div style="font-size: 12px; color: #777;">Issuing Institution</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto 10px;"></div>
+                    <div>Registrar</div>
+                    <div style="font-size: 12px; color: #777;">Authority</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
 
 // ---------------------------------------------------------
 // CORE VERIFICATION LOGIC

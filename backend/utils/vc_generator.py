@@ -20,7 +20,7 @@ class VCGenerator:
         "https://w3id.org/security/suites/ed25519-2020/v1",
     ]
 
-    KEYSTORE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "instance", "issuer_key.json")
+    KEYSTORE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "issuer_key.json")
 
     @staticmethod
     def _b58_encode(b: bytes) -> str:

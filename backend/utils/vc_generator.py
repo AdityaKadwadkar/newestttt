@@ -17,11 +17,12 @@ class VCGenerator:
 
     CONTEXT = [
         "https://www.w3.org/2018/credentials/v1",
+        "https://schema.org/",
         "https://w3id.org/security/suites/jcs-ed25519-2020/v1",
         "https://w3id.org/vc/status-list/2021/v1",
         "https://kle-credential-system.onrender.com/static/credential-v1.json"
     ]
-    print("DEBUG: VCGenerator Loaded - Custom Context & JcsEd25519Signature2020 Version")
+    print("DEBUG: VCGenerator Loaded - Schema.org + JCS + Custom Context Version")
 
     KEYSTORE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "issuer_key.json")
 

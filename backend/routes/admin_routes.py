@@ -393,7 +393,7 @@ def update_request_status(request_id):
             credential, error = CredentialService.generate_credential_for_student(
                 req.student_id,
                 req.credential_type,
-                req.request_id, # Using request_id as batch_id/reference
+                None, # Use None for batch_id for single issuance from Request
                 issuer_info,
                 additional_data=additional_data
             )

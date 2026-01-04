@@ -507,16 +507,17 @@ class CredentialService:
                     )
                     db.session.add(record)
             
-            # Update log
-            log_entry = CredentialIssueLog.query.filter_by(
-                batch_id=batch_id,
-                student_id=student_id
-            ).first()
-            
-            if log_entry:
-                log_entry.credential_id = credential_id
-                log_entry.status = "success"
-                log_entry.processed_at = datetime.utcnow()
+            # Update log (Only if part of a batch)
+            if batch_id:
+                log_entry = CredentialIssueLog.query.filter_by(
+                    batch_id=batch_id,
+                    student_id=student_id
+                ).first()
+                
+                if log_entry:
+                    log_entry.credential_id = credential_id
+                    log_entry.status = "success"
+                    log_entry.processed_at = datetime.utcnow()
             
             db.session.commit()
             

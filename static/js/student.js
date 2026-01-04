@@ -276,12 +276,19 @@ async function viewCredential(credentialId, mode = 'view') {
     }
 }
 
-// Build Course Completion template from VC data
+// ---------------------------------------------------------
+// CERTIFICATE TEMPLATES (Sync with Verifier Portal)
+// ---------------------------------------------------------
+
+function getStudentName(subject) {
+    return subject.student_name || subject.name || subject.full_name || subject.fullName ||
+        (subject.first_name ? `${subject.first_name} ${subject.last_name || ''}` : '-') || '-';
+}
+
 function renderCourseCompletionTemplate(credential) {
     const vcData = credential.vc_data || {};
     const subject = vcData.credentialSubject || {};
-
-    const studentName = subject.name || '-';
+    const studentName = getStudentName(subject);
     const courseName = subject.courseName || subject.course_name || 'Course';
     const courseCode = subject.courseCode || subject.course_code || '';
     const completionDate = subject.completionDate || subject.completion_date || '';
@@ -296,30 +303,35 @@ function renderCourseCompletionTemplate(credential) {
     }
 
     return `
-        <div class="course-completion-wrapper">
-            <div class="course-completion-border"></div>
-            <div class="course-completion-header">
-                <h1>Certificate</h1>
-                <h2>of Completion</h2>
-            </div>
-            <div class="course-completion-text">This is to certify that</div>
-            <div class="course-completion-student-name">${studentName}</div>
-            <div class="course-completion-text">has successfully completed the course</div>
-            <div class="course-completion-course-info">
-                <span class="course-completion-course-name">${courseName}</span>
-                ${courseCode ? `<br><small>(${courseCode})</small>` : ''}
-            </div>
-            <div class="course-completion-text">on ${formattedDate}</div>
-            ${description ? `<div class="course-completion-details">${description}</div>` : ''}
+        <div class="course-completion-wrapper" style="padding: 50px; text-align: center; border: 5px double #02040a; background: #fff; color: #000; font-family: 'Times New Roman', serif;">
+            <div style="width: 100px; height: 100px; margin: 0 auto 20px; border-radius: 50%; background: #02040a; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold;">LOGO</div>
+            <div style="font-size: 48px; font-weight: bold; color: #02040a;">Certificate</div>
+            <div style="font-size: 18px; letter-spacing: 5px; color: #555; margin-bottom: 50px;">OF COMPLETION</div>
             
-            <div class="course-completion-footer">
-                <div class="course-completion-sig">
-                    <div class="sig-name">KLE Tech University</div>
-                    <div class="sig-title">Issuing Institution</div>
+            <div style="font-size: 20px; font-style: italic; color: #666;">This is to certify that</div>
+            
+            <div style="font-size: 38px; font-weight: bold; margin: 30px 0; color: #000; border-bottom: 1px solid #ccc; display: inline-block; min-width: 400px;">${studentName}</div>
+            
+            <div style="font-size: 20px; color: #444; margin-bottom: 20px;">
+                has successfully completed the course
+            </div>
+            
+            <div style="font-size: 32px; font-weight: bold; color: #0070f3; margin-bottom: 40px;">${courseName}</div>
+            ${courseCode ? `<div style="font-size: 16px; margin-bottom: 20px;">(${courseCode})</div>` : ''}
+            
+            <div style="font-size: 16px; color: #555; margin-bottom: 60px;">Given on ${formattedDate}</div>
+            ${description ? `<div style="margin-bottom: 30px; font-style: italic;">${description}</div>` : ''}
+            
+            <div style="display: flex; justify-content: space-between; padding: 0 60px;">
+                <div style="text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto 10px;"></div>
+                    <div>KLE Tech University</div>
+                    <div style="font-size: 12px; color: #777;">Issuing Institution</div>
                 </div>
-                <div class="course-completion-sig">
-                    <div class="sig-name">${credential.issuer_name || 'Registrar'}</div>
-                    <div class="sig-title">Authority</div>
+                <div style="text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto 10px;"></div>
+                    <div>${credential.issuer_name || 'Registrar'}</div>
+                    <div style="font-size: 12px; color: #777;">Authority</div>
                 </div>
             </div>
         </div>
@@ -327,11 +339,12 @@ function renderCourseCompletionTemplate(credential) {
 }
 
 // Build Workshop Certificate template from VC data
+
+// Build Workshop Certificate template from VC data
 function renderWorkshopCertificateTemplate(credential) {
     const vcData = credential.vc_data || {};
     const subject = vcData.credentialSubject || {};
-
-    const studentName = subject.name || '-';
+    const studentName = getStudentName(subject);
     const workshopName = subject.workshopName || subject.workshop_name || 'Workshop';
     const organizer = subject.organizer || '';
     const duration = subject.durationHours || subject.duration_hours || subject.workshopDuration || subject.workshop_duration || '';
@@ -347,32 +360,32 @@ function renderWorkshopCertificateTemplate(credential) {
     }
 
     return `
-        <div class="workshop-certificate-wrapper">
-            <div class="workshop-certificate-border"></div>
-            <div class="workshop-title">Workshop Certificate</div>
-            <div class="workshop-award-text">This certificate is proudly presented to</div>
-            <div class="workshop-student-name">${studentName}</div>
-            <div class="workshop-award-text">for participating in the workshop</div>
-            <div class="workshop-info">
-                <span class="workshop-name">${workshopName}</span>
-                ${organizer ? `<br><span>Organized by: ${organizer}</span>` : ''}
-                ${duration ? `<br><span>Duration: ${duration}</span>` : ''}
-            </div>
-            <div class="workshop-meta">
-                Date: ${formattedDate}
-            </div>
-            ${description ? `<div class="workshop-meta">${description}</div>` : ''}
+        <div class="certificate-wrapper" style="padding: 40px; text-align: center; border: 10px solid #f59e0b; background: #fff; color: #000; font-family: 'Arial', sans-serif;">
+            <div style="font-size: 40px; font-weight: 900; color: #f59e0b; margin-bottom: 5px;">CERTIFICATE</div>
+            <div style="font-size: 20px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase;">OF PARTICIPATION</div>
             
-            <div class="workshop-signatures">
-                <div class="workshop-signature">
-                    <div class="workshop-signature-line"></div>
-                    <div class="workshop-signature-name">${organizer || 'Organizer'}</div>
-                    <div class="workshop-signature-title">Organizer</div>
+            <div style="margin: 50px 0 20px; font-size: 18px;">PROUDLY PRESENTED TO</div>
+            
+            <div style="font-size: 42px; font-family: 'Georgia', serif; font-weight: bold; margin: 10px 0; color: #333;">${studentName}</div>
+            
+            <div style="margin: 30px auto; max-width: 600px; line-height: 1.6; font-size: 18px; color: #444;">
+                For successfully completing the workshop on <br>
+                <strong style="font-size: 24px; color: #000;">${workshopName}</strong><br>
+                ${duration ? `<span style="font-size: 16px; color: #666;">(${duration} Hours Duration)</span>` : ''}
+            </div>
+            
+            ${description ? `<div style="margin-bottom: 20px;">${description}</div>` : ''}
+
+            <div style="margin-top: 60px; display: flex; justify-content: space-around;">
+                <div style="text-align: center;">
+                    <div style="font-size: 14px; margin-bottom: 5px;">${formattedDate}</div>
+                    <div style="border-top: 2px solid #f59e0b; width: 150px; margin: 0 auto;"></div>
+                    <div style="font-size: 12px; font-weight: bold; margin-top: 5px;">DATE</div>
                 </div>
-                <div class="workshop-signature">
-                    <div class="workshop-signature-line"></div>
-                    <div class="workshop-signature-name">${credential.issuer_name || 'KLE Tech'}</div>
-                    <div class="workshop-signature-title">Authorized Signatory</div>
+                <div style="text-align: center;">
+                    <div style="font-family: 'Great Vibes', cursive; font-size: 24px; margin-bottom: 0px;">KLE Tech</div>
+                    <div style="border-top: 2px solid #f59e0b; width: 150px; margin: 0 auto;"></div>
+                    <div style="font-size: 12px; font-weight: bold; margin-top: 5px;">SIGNATURE</div>
                 </div>
             </div>
         </div>
@@ -380,20 +393,25 @@ function renderWorkshopCertificateTemplate(credential) {
 }
 
 // Build Hackathon Certificate template from VC data
+
+// Build Hackathon Certificate template from VC data
 function renderHackathonCertificateTemplate(credential) {
     const vcData = credential.vc_data || {};
     const subject = vcData.credentialSubject || {};
-
-    const studentName = subject.name || '-';
+    const studentName = getStudentName(subject);
     const hackathonName = subject.hackathonName || subject.hackathon_name || 'Hackathon';
     const organizer = subject.organizer || '';
     const teamName = subject.teamName || subject.team_name || '';
     const participationDate = subject.participationDate || subject.participation_date || '';
-    const position = subject.position || '';
+    const position = subject.position || 'Participant';
     const prizeWon = subject.prizeWon || subject.prize_won || '';
     const description = subject.description || '';
 
     // Determine certificate style (green for participation, red for winners)
+    // For syncing with verifier.js, we use the blue/standard style unless requested otherwise, 
+    // but the verifier.js version was customized to be generic blue. 
+    // Let's stick to the Student Portal's richer "style-red" / "style-green" logic but using getStudentName
+
     const certificateStyle = position && position.toLowerCase().includes('1st') ? 'style-red' : 'style-green';
     const certificateTitle = position ? 'Hackathon Certificate' : 'Certificate of Participation';
 
@@ -412,51 +430,43 @@ function renderHackathonCertificateTemplate(credential) {
 
     // Build reason text
     let reasonText = '';
-    if (position) {
-        reasonText = `for placing ${position}${prizeWon ? ` and winning ${prizeWon}` : ''} in ${hackathonName}`;
+    if (position && position !== 'Participant') {
+        reasonText = `for placing <strong style="font-size: 22px; color: #000;">${position}</strong>${prizeWon ? ` and winning ${prizeWon}` : ''} <br>in the event <strong style="color: #0070f3;">${hackathonName}</strong>`;
     } else {
-        reasonText = `for participating in ${hackathonName}`;
+        reasonText = `for successfully participating in <br><strong style="color: #0070f3;">${hackathonName}</strong>`;
     }
 
     if (description) {
-        reasonText += ` - ${description}`;
+        reasonText += `<br><span style="font-size: 14px; color: #666;">${description}</span>`;
     }
 
     return `
-        <div class="hackathon-certificate-wrapper ${certificateStyle}">
-            <div class="certificate-border"></div>
-            <div class="decorative-shape-top-left"></div>
-            <div class="decorative-shape-bottom-right"></div>
+         <div class="certificate-wrapper" style="padding: 40px; text-align: center; border: 10px solid #0070f3; background: #fff; color: #000; font-family: 'Georgia', serif;">
+            <div style="font-size: 30px; font-weight: bold; color: #0070f3; margin-bottom: 10px;">CERTIFICATE</div>
+            <div style="font-size: 18px; letter-spacing: 2px; text-transform: uppercase;">OF ACHIEVEMENT</div>
             
-            <div class="certificate-content">
-                <div class="certificate-logo-area">
-                    <div class="certificate-logo-left">${hackathonName.substring(0, 20)}</div>
-                    <div class="certificate-logo-right">${organizer || 'KLE Tech'}</div>
+            <div style="margin: 40px 0; font-style: italic; color: #555;">This is to certify that</div>
+            
+            <div style="font-size: 36px; font-weight: bold; margin: 20px 0; border-bottom: 2px solid #ddd; display: inline-block; padding: 0 40px 10px;">${studentName}</div>
+            
+            <div style="font-size: 18px; margin: 20px 0; line-height: 1.6;">
+                ${reasonText}
+            </div>
+            
+            ${teamName ? `<div style="margin: 20px 0;"><strong>Team:</strong> ${teamName}</div>` : ''}
+
+            <div style="margin-top: 50px; display: flex; justify-content: space-between; padding: 0 50px;">
+                <div style="text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto 10px;"></div>
+                    <div style="font-weight: bold;">${organizer || 'Organizer'}</div>
                 </div>
-                
-                <div class="certificate-title">${certificateTitle}</div>
-                
-                <div class="certificate-award-text">This certificate is awarded to</div>
-                
-                <div class="certificate-student-name">${studentName}</div>
-                
-                <div class="certificate-reason">${reasonText}</div>
-                
-                ${teamName ? `<div class="certificate-details"><strong>Team:</strong> ${teamName}</div>` : ''}
-                
-                ${organizer ? `<div class="certificate-details"><strong>Organized by:</strong> ${organizer}</div>` : ''}
-                
-                ${formattedDate ? `<div class="certificate-date">${formattedDate}</div>` : ''}
-                
-                <div class="certificate-signatures">
-                    <div class="certificate-signature">
-                        <div class="certificate-signature-name">${organizer || 'Organizer'}</div>
-                        <div class="certificate-signature-title">Organizer</div>
-                    </div>
-                    <div class="certificate-signature">
-                        <div class="certificate-signature-name">${credential.issuer_name || 'KLE Tech'}</div>
-                        <div class="certificate-signature-title">Issuing Authority</div>
-                    </div>
+                <div style="text-align: center;">
+                    <div style="font-weight: bold; font-size: 16px;">${formattedDate}</div>
+                    <div style="font-size: 12px; color: #666;">Date</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="border-top: 1px solid #000; width: 200px; margin: 0 auto 10px;"></div>
+                    <div style="font-weight: bold;">Authority</div>
                 </div>
             </div>
         </div>
@@ -468,7 +478,11 @@ function renderMarkscardTemplate(credential) {
     const gradeCard = credential.grade_card || {};
     const header = gradeCard.credentialHeader || {};
     const studentId = header.usn || '-';
-    const studentName = header.student_name || '-';
+    // Robust name extraction
+    const studentName = (header.student_name && header.student_name !== '-')
+        ? header.student_name
+        : getStudentName(credential.vc_data?.credentialSubject || {});
+
     const branch = header.branch || '-';
     const program = header.program || '';
 
@@ -588,9 +602,9 @@ function renderTranscriptTemplate(credential) {
     const semesters = subject.semesters || [];
 
     // Student Details
-    const studentName = subject.name || subject.student_name || '–';
+    const studentName = getStudentName(subject);
     const usn = subject.usn || subject.student_id || '–';
-    const program = subject.program || '–';
+    const program = subject.program || 'Bachelor of Technology'; // Fixed default
     const branch = subject.branch || subject.department || '–';
     const batchYear = subject.batchYear || subject.batch_year || '–';
     const medium = subject.mediumOfInstruction || subject.medium_of_instruction || 'English';
@@ -617,7 +631,7 @@ function renderTranscriptTemplate(credential) {
                     <tr>
                         <td style="border: 1px solid #000; padding: 4px 6px;">${course.courseCode || course.course_code || '–'}</td>
                         <td style="border: 1px solid #000; padding: 4px 6px;">${course.courseName || course.course_name || '–'}</td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${course.credits || '–'}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${course.credits || course.credits === 0 ? course.credits : '–'}</td>
                         <td style="border: 1px solid #000; padding: 4px 6px; text-align: center;">${course.grade || '–'}</td>
                     </tr>
                 `;
@@ -628,7 +642,7 @@ function renderTranscriptTemplate(credential) {
 
         semestersHtml += `
             <div class="transcript-semester-block" style="border: 1px solid #000; padding: 10px; margin-bottom: 10px; min-height: 180px; display: flex; flex-direction: column;">
-                <div style="font-weight: bold; font-size: 13px; text-align: center; margin-bottom: 5px; border-bottom: 1px solid #000; padding-bottom: 2px;">${semesterNames[idx]}</div>
+                <div style="font-weight: bold; font-size: 13px; text-align: center; margin-bottom: 5px; border-bottom: 1px solid #000; padding-bottom: 2px;">${semesterNames[idx] || `Semester ${idx + 1}`}</div>
                 <table style="width: 100%; border-collapse: collapse; font-size: 11px; flex: 1;">
                     <thead>
                         <tr>
@@ -657,13 +671,15 @@ function renderTranscriptTemplate(credential) {
                 </div>
             </div>
 
-            <div class="transcript-student-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 20px; font-size: 12px;">
+            <div class="transcript-student-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #000; margin-bottom: 20px; font-size: 12px;">
                 <div style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px; display: flex;"><span style="width: 140px; font-weight: bold;">Student Name</span><span>${studentName}</span></div>
-                <div style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px; display: flex;"><span style="width: 140px; font-weight: bold;">University ID</span><span>${usn}</span></div>
+                <div style="border-bottom: 1px solid #000; padding: 6px; display: flex;"><span style="width: 140px; font-weight: bold;">University ID</span><span>${usn}</span></div>
+                
                 <div style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px; display: flex;"><span style="width: 140px; font-weight: bold;">Program</span><span>${program}</span></div>
-                <div style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px; display: flex;"><span style="width: 140px; font-weight: bold;">Branch</span><span>${branch}</span></div>
-                <div style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px; display: flex;"><span style="width: 140px; font-weight: bold;">Year of Admission</span><span>${batchYear}</span></div>
-                <div style="border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 6px; display: flex;"><span style="width: 140px; font-weight: bold;">Medium of Instruction</span><span>${medium}</span></div>
+                <div style="border-bottom: 1px solid #000; padding: 6px; display: flex;"><span style="width: 140px; font-weight: bold;">Branch</span><span>${branch}</span></div>
+                
+                <div style="border-right: 1px solid #000; padding: 6px; display: flex;"><span style="width: 140px; font-weight: bold;">Year of Admission</span><span>${batchYear}</span></div>
+                <div style="padding: 6px; display: flex;"><span style="width: 140px; font-weight: bold;">Medium of Instruction</span><span>${medium}</span></div>
             </div>
 
             <div class="transcript-semesters-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">

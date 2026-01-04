@@ -4,7 +4,6 @@ Flask-CORS==4.0.0
 Flask-JWT-Extended==4.5.3
 Werkzeug==2.3.7
 cryptography==41.0.7
-pyld==2.0.3
 python-dotenv==1.0.0
 requests==2.31.0
 qrcode==7.4.2
@@ -16,4 +15,3 @@ numpy==1.26.2
 gunicorn==20.1.0
 psycopg2-binary==2.9.9
 pyld==2.0.4
-

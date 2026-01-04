@@ -1,22 +1,21 @@
 /* Premium Shared Styles for KLE Tech Digital Credential System */
 :root {
-    /* Modern Slate Palette */
+    /* Modern Slate Palette with Silver-Glass Cards */
     --bg-dark: #0f172a;
-    /* Slate 900 - Lighter than pure black */
-    --bg-card: rgba(30, 41, 59, 0.7);
-    /* Slate 800 with opacity */
-    --bg-glass: rgba(255, 255, 255, 0.05);
+
+    /* Silverish Glass Effect for Boxes */
+    --bg-card: rgba(255, 255, 255, 0.08);
+    --bg-glass: rgba(255, 255, 255, 0.12);
+
     --primary-color: #0070f3;
     --primary-glow: #0070f388;
     --secondary-color: #f59e0b;
     --accent-blue: #38bdf8;
-    /* Lighter Sky Blue */
 
     --light-text: #f1f5f9;
-    /* Slate 100 */
     --muted-text: #94a3b8;
-    /* Slate 400 */
-    --border-glass: rgba(255, 255, 255, 0.1);
+    --border-glass: rgba(255, 255, 255, 0.2);
+    /* Lighter border for silver definition */
 
     --font-main: 'Inter', sans-serif;
     --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);

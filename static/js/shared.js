@@ -87,7 +87,7 @@ async function apiRequest(endpoint, options = {}) {
 
         // Handle network errors
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            throw new Error('Cannot connect to server. Please make sure the backend is running on http://localhost:5000');
+            throw new Error('Cannot connect to server. Please check your internet connection or try again later.');
         }
 
         throw error;

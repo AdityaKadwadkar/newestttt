@@ -49,6 +49,36 @@ def login():
             "email": student_data.get('email')
         }
     )
+
+    # Sync Student to Local DB (Required for Foreign Keys in Requests/Credentials)
+    # Check if student exists locally
+    from backend.models import Student
+    local_student = Student.query.get(student_id)
+    
+    if not local_student:
+        try:
+            # Create new local student record from Contineo data
+            new_student = Student(
+                student_id=student_data.get('student_id'),
+                first_name=student_data.get('first_name'),
+                last_name=student_data.get('last_name'),
+                email=student_data.get('email'),
+                department=student_data.get('department'),
+                batch_year=student_data.get('batch_year'),
+                division=student_data.get('division'),
+                current_semester=student_data.get('current_semester'),
+                course_enrolled=student_data.get('course_enrolled'),
+                # We don't need to store the password hash locally as we auth against Contineo
+                # But if the model requires it, we might need a dummy or the actual hash if available
+            )
+            db.session.add(new_student)
+            db.session.commit()
+            print(f"Synced student {student_id} to local database.")
+        except Exception as e:
+            print(f"Error syncing student to local DB: {e}")
+            db.session.rollback()
+            # We proceed even if sync fails, though subsequent requests might fail.
+            # ideally we should error out or retry.
     
     # Return student data (sanitize by removing password before returning)
     if "password_dob" in student_data:

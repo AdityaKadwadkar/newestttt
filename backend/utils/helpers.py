@@ -114,7 +114,20 @@ def role_required(required_role):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             claims = get_jwt()
-            if claims.get("role") != required_role:
+            user_role = claims.get("role")
+            
+            # If required_role is a list, check if user_role is in it
+            # Otherwise, for 'admin' check, also allow 'issuer' (standard admin role in this app)
+            allowed = False
+            if isinstance(required_role, list):
+                allowed = user_role in required_role
+            elif user_role == required_role:
+                allowed = True
+            elif required_role == 'admin' and user_role == 'issuer':
+                # Map 'issuer' role to 'admin' access for the dashboard
+                allowed = True
+                
+            if not allowed:
                 return json_response(False, None, f"Unauthorized: {required_role} role required", 403)
             return f(*args, **kwargs)
         return decorated_function

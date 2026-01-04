@@ -93,7 +93,7 @@ def login():
     # Create access token
     access_token = create_access_token(
         identity=admin.admin_id,
-        additional_claims={"role": "admin", "username": admin.username}
+        additional_claims={"role": admin.role, "username": admin.username}
     )
     
     return json_response(True, {

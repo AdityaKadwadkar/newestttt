@@ -50,6 +50,9 @@ document.addEventListener('DOMContentLoaded', function () {
 document.getElementById('loginForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
+    // Clear any previous session leftovers (important!)
+    Storage.clear();
+
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 

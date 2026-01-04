@@ -545,8 +545,7 @@ class CredentialService:
         
         issuer_info = {
             "issuer_id": batch.issuer_id,
-            "name": batch.issuer_name,
-            "did": f"did:key:{batch.issuer_id}"
+            "name": batch.issuer_name
         }
         
         success_count = 0

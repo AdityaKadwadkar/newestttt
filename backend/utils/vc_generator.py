@@ -20,6 +20,7 @@ class VCGenerator:
         "https://w3id.org/security/suites/ed25519-2020/v1",
         "https://w3id.org/vc/status-list/2021/v1"
     ]
+    print("DEBUG: VCGenerator Loaded - StatusList2021Entry Version")
 
     KEYSTORE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "issuer_key.json")
 

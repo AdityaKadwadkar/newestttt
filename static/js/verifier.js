@@ -653,23 +653,14 @@ function displayVerificationResult(data, duration) {
                 </div>
             </div>
             <script>
-                function toggleRawJSON() {
-                    const el = document.getElementById('rawJsonContainer');
-                    el.style.display = el.style.display === 'none' ? 'block' : 'none';
-                }
-                function copyRawJSON() {
-                    const text = document.getElementById('rawJsonContent').innerText;
-                    navigator.clipboard.writeText(text).then(() => {
-                        alert('JSON copied to clipboard!');
-                    });
-                }
+                // Removed inline script
             </script>
-        </div >
-            `;
+        </div>
+    `;
 
     // Append minimal meta info
     html += `
-            < div class="detail-section" >
+        <div class="detail-section">
             <h3>Verification Metadata</h3>
             <table class="credential-details-table">
                 <tr>
@@ -693,16 +684,16 @@ function displayVerificationResult(data, duration) {
                     <td>${formatDateTime(data.verification_timestamp) || '-'}</td>
                 </tr>
             </table>
-        </div >
-            `;
+        </div>
+    `;
 
     // Add credential-specific details
     if (data.credential_type === 'markscard') {
         html += `
-            < div class="info-item" style = "margin-top: 15px;" >
+            <div class="info-item" style="margin-top: 15px;">
                 <div class="info-label">Course</div>
                 <div class="info-value">${subject.course || '-'}</div>
-            </div >
+            </div>
             <div class="info-item">
                 <div class="info-label">Marks</div>
                 <div class="info-value">${subject.marksObtained || '-'} / ${subject.maxMarks || '-'}</div>
@@ -716,16 +707,16 @@ function displayVerificationResult(data, duration) {
 
     if (data.status === 'revoked') {
         html += `
-            < div class="verification-error" style = "margin-top: 20px;" >
+            <div class="verification-error" style="margin-top: 20px;">
                 <h4>⚠️ Credential Revoked</h4>
                 <p>This credential has been revoked by the issuer.</p>
                 ${data.revoked_date ? `<p><strong>Revoked on:</strong> ${formatDateTime(data.revoked_date)}</p>` : ''}
                 ${data.revocation_reason ? `<p><strong>Reason:</strong> ${data.revocation_reason}</p>` : ''}
-            </div >
-            `;
+            </div>
+        `;
     }
 
-    html += `</div > `;
+    html += `</div>`;
 
     resultContent.innerHTML = html;
 }
@@ -735,14 +726,14 @@ function displayError(message) {
     const resultContent = document.getElementById('resultContent');
 
     resultContent.innerHTML = `
-            < div class="verification-error" >
+        <div class="verification-error">
             <h2>❌ Verification Failed</h2>
             <p>${message}</p>
             <p style="margin-top: 10px; font-size: 14px;">
                 Please check the credential ID and try again. If the problem persists, the credential may not exist or may have been revoked.
             </p>
-        </div >
-            `;
+        </div>
+    `;
 }
 
 // Tab switching
@@ -755,10 +746,10 @@ function showVerifyTab(tabName) {
         btn.classList.remove('active');
     });
 
-    const activeTab = document.getElementById(`${tabName} Tab`);
+    const activeTab = document.getElementById(`${tabName}Tab`);
     if (activeTab) activeTab.classList.remove('hidden');
 
-    const activeBtn = document.getElementById(`tab - ${tabName} `);
+    const activeBtn = document.getElementById(`tab-${tabName}`);
     if (activeBtn) activeBtn.classList.add('active');
 }
 
@@ -768,4 +759,36 @@ document.getElementById('credentialId')?.addEventListener('keypress', function (
         verifyCredential();
     }
 });
+
+// Global functions for Raw JSON viewing
+window.toggleRawJSON = function () {
+    const el = document.getElementById('rawJsonContainer');
+    if (el) {
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+
+        // Scroll to container if opening
+        if (el.style.display === 'block') {
+            setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+        }
+    }
+};
+
+window.copyRawJSON = function () {
+    const content = document.getElementById('rawJsonContent');
+    if (!content) return;
+
+    const text = content.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        // Show temporary tooltip or feedback
+        const btn = document.querySelector('#rawJsonContainer button');
+        if (btn) {
+            const originalText = btn.innerText;
+            btn.innerText = 'Copied!';
+            setTimeout(() => btn.innerText = originalText, 2000);
+        }
+        alert('JSON copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+};
 

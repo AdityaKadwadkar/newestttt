@@ -642,7 +642,7 @@ function displayVerificationResult(data, duration) {
     // Add Raw VC JSON Section
     const formattedVC = data.vc ? JSON.stringify(data.vc, null, 2) : '{}';
     html += `
-            < div class="detail-section" style = "margin-top: 20px;" >
+        <div class="detail-section" style="margin-top: 20px;">
             <button onclick="toggleRawJSON()" class="btn-secondary" style="width: 100%; text-align: center; justify-content: center;">
                 📋 View Raw Credential (JSON)
             </button>

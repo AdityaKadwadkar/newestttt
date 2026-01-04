@@ -512,6 +512,8 @@ function displayVerificationResult(data, duration) {
     const gradeCard = getPopulated(data, ['grade_card', 'gradeCard']) || {};
     const credentialType = (data.credential_type || data.credentialType || subject.credentialType || subject.credential_type || '').toLowerCase().trim();
 
+    console.log('Final Extraction:', { subject, gradeCard, credentialType });
+
     let statusClass = 'verification-info';
     let statusIcon = 'ℹ️';
     let statusText = 'Unknown';
@@ -531,6 +533,9 @@ function displayVerificationResult(data, duration) {
     }
 
     let html = `
+        <div style="background: rgba(255,255,255,0.05); padding: 5px 10px; font-size: 10px; color: #666; margin-bottom: 20px;">
+            DEBUG: Universal Verifier v3.1 | Data: ${subject.id || 'Legacy'}
+        </div>
         <div class="${statusClass}">
             <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
                 <span style="font-size: 32px;">${statusIcon}</span>
@@ -545,7 +550,7 @@ function displayVerificationResult(data, duration) {
     `;
 
     // Render hackathon certificate template for hackathon credentials
-    if (credentialType === 'hackathon') {
+    if (credentialType === 'hackathon' || credentialType.includes('hackathon')) {
         html += `
             <div class="detail-section">
                 ${renderHackathonCertificateTemplate(data)}
@@ -561,7 +566,7 @@ function displayVerificationResult(data, duration) {
         `;
     }
     // Render workshop template
-    else if (credentialType === 'workshop') {
+    else if (credentialType === 'workshop' || credentialType.includes('workshop')) {
         html += `
             <div class="detail-section">
                 ${renderWorkshopCertificateTemplate(data)}
@@ -569,16 +574,15 @@ function displayVerificationResult(data, duration) {
         `;
     }
     // Render course completion template
-    else if (credentialType === 'course_completion') {
+    else if (credentialType === 'course_completion' || credentialType.includes('completion')) {
         html += `
             <div class="detail-section">
                 ${renderCourseCompletionTemplate(data)}
             </div>
         `;
     }
-
-    // Render full KLE Grade Card template
-    else if (credentialType === 'markscard' || (gradeCard && (gradeCard.credentialHeader || gradeCard.credential_header))) {
+    // Render KLE Grade Card template (Legacy or Fresh)
+    else if (credentialType === 'markscard' || credentialType === 'markscardcredential' || (gradeCard && (gradeCard.credentialHeader || gradeCard.credential_header)) || subject.courses) {
         // PRIORITIZE: Verified Subject data (from the VC itself)
         // FALLBACK: Local DB data (gradeCard)
 
@@ -593,28 +597,33 @@ function displayVerificationResult(data, duration) {
 
         const coursesSource = subject.courses || subject.courseRecords || subject.course_records || (gradeCard.courseRecords || gradeCard.course_records || []);
         const courses = Array.isArray(coursesSource) ? coursesSource : [];
+        console.log('Courses Source Identified:', courses);
 
         let rowsHtml = '';
-        courses.forEach((course, index) => {
-            // Robust course key mapping
-            const code = course.course_code || course.courseCode || course.code || '';
-            const name = course.course_name || course.courseName || course.name || '';
-            const creds = course.credits || course.credit || '';
-            const grd = course.grade || '';
-            const gpaVal = course.gpa != null ? course.gpa : (course.gradePoints || course.grade_points || '');
-            const sno = course.serial_no || course.serialNo || course.sno || (index + 1);
+        if (courses.length > 0) {
+            courses.forEach((course, index) => {
+                // Robust course key mapping
+                const code = course.course_code || course.courseCode || course.code || '';
+                const name = course.course_name || course.courseName || course.name || '';
+                const creds = course.credits || course.credit || '';
+                const grd = course.grade || '';
+                const gpaVal = course.gpa != null ? course.gpa : (course.gradePoints || course.grade_points || '');
+                const sno = course.serial_no || course.serialNo || course.sno || (index + 1);
 
-            rowsHtml += `
-                <tr>
-                    <td>${sno}</td>
-                    <td>${code}</td>
-                    <td>${name}</td>
-                    <td>${creds}</td>
-                    <td>${grd}</td>
-                    <td>${gpaVal}</td>
-                </tr>
-            `;
-        });
+                rowsHtml += `
+                    <tr>
+                        <td>${sno}</td>
+                        <td>${code}</td>
+                        <td>${name}</td>
+                        <td>${creds}</td>
+                        <td>${grd}</td>
+                        <td>${gpaVal}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            rowsHtml = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No course records found in this credential.</td></tr>';
+        }
 
         html += `
             <div class="detail-section">

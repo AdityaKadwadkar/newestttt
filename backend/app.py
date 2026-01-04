@@ -57,10 +57,7 @@ def create_app():
             "database": "connected"
         })
     
-    # Serve static files
-    @app.route('/static/<path:filename>')
-    def static_files(filename):
-        return send_from_directory(app.static_folder, filename)
+
     
     # Initialize database
     with app.app_context():

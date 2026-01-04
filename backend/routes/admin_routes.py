@@ -15,13 +15,13 @@ bp = Blueprint('admin', __name__)
 def login():
     """Admin login"""
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+    username = str(data.get('username') or "").strip()
+    password = str(data.get('password') or "").strip()
     
     if not username or not password:
         return json_response(False, None, "Username and password required", 400)
     
-    print(f"Login Attempt: username={username}")
+    print(f"Login Attempt: username='{username}'")
     
     # 1. Try Local Auth (Case-insensitive)
     admin = Admin.query.filter(db.func.lower(Admin.username) == db.func.lower(username)).first()
@@ -51,28 +51,36 @@ def login():
                 target_faculty = fac
                 break
         
-        if target_faculty and target_faculty.get("password") == password:
-            print(f"Contineo Auth Success for {username}")
-            auth_success = True
+        if target_faculty:
+            # DEBUG LOG: See what data we actually got back
+            print(f"Found faculty in Contineo. Data keys: {list(target_faculty.keys())}")
             
-            if not admin:
-                print(f"Creating new local Admin record for {username}")
-                admin = Admin(
-                    admin_id=target_faculty.get("faculty_id"),
-                    username=target_faculty.get("faculty_id"),
-                    email=target_faculty.get("email"),
-                    password_hash=hash_password(password),
-                    full_name=f"{target_faculty.get('first_name')} {target_faculty.get('last_name')}",
-                    role='issuer'
-                )
-                db.session.add(admin)
-                db.session.commit()
+            fac_pass = str(target_faculty.get("password") or "").strip()
+            if fac_pass and fac_pass == password:
+                print(f"Contineo Auth Success for {username}")
+                auth_success = True
+                
+                if not admin:
+                    print(f"Creating new local Admin record for {username}")
+                    admin = Admin(
+                        admin_id=target_faculty.get("faculty_id"),
+                        username=target_faculty.get("faculty_id"),
+                        email=target_faculty.get("email"),
+                        password_hash=hash_password(password),
+                        full_name=f"{target_faculty.get('first_name')} {target_faculty.get('last_name')}",
+                        role='issuer'
+                    )
+                    db.session.add(admin)
+                    db.session.commit()
+                else:
+                    print(f"Updating local Admin record for {username}")
+                    admin.password_hash = hash_password(password)
+                    db.session.commit()
             else:
-                print(f"Updating local Admin record for {username}")
-                admin.password_hash = hash_password(password)
-                db.session.commit()
+                print(f"Contineo Pass Mismatch or Missing for {username}")
+                return json_response(False, None, "Invalid credentials", 401)
         else:
-            print(f"Auth Failed: target_faculty_found={bool(target_faculty)}")
+            print(f"Auth Failed: user '{username}' not in Contineo list.")
             return json_response(False, None, "Invalid credentials", 401)
     
     if not admin.is_active:

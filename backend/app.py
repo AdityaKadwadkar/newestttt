@@ -78,6 +78,30 @@ def create_app():
             )
             db.session.add(admin)
             db.session.commit()
+
+        # Sync Faculty Admins from Contineo
+        from backend.services.contineo_service import ContineoService
+        try:
+            print("Syncing Faculty Admins from Contineo...")
+            faculty_list = ContineoService.get_all_faculty()
+            for faculty in faculty_list:
+                if faculty.get("is_admin"):
+                    f_id = faculty.get("faculty_id")
+                    if not Admin.query.get(f_id) and not Admin.query.filter_by(username=f_id).first():
+                        print(f"Provisioning Faculty Admin: {f_id}")
+                        new_fac_admin = Admin(
+                            admin_id=f_id,
+                            username=f_id,
+                            email=faculty.get("email"),
+                            password_hash=hash_password(faculty.get("password", "password123")),
+                            full_name=f"{faculty.get('first_name')} {faculty.get('last_name')}",
+                            role='issuer'
+                        )
+                        db.session.add(new_fac_admin)
+            db.session.commit()
+        except Exception as e:
+            print(f"Startup Faculty Sync Warning: {e}")
+            db.session.rollback()
     
     return app
 

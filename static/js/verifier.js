@@ -562,21 +562,29 @@ function displayVerificationResult(data, duration) {
         `;
     }
 
-    // Render full KLE Grade Card template when grade card data is available
-    else if (gradeCard && gradeCard.credentialHeader) {
-        const header = gradeCard.credentialHeader;
-        const courses = gradeCard.courseRecords || [];
+    // Render full KLE Grade Card template when grade card data is available OR from Subject data
+    else if ((gradeCard && gradeCard.credentialHeader) || credentialType === 'markscard') {
+        const header = gradeCard.credentialHeader || {
+            usn: subject.studentId || subject.id || '-',
+            student_name: subject.name || '-',
+            branch: subject.department || '-',
+            program: subject.program || '-',
+            total_credits: subject.totalCredits || '-',
+            sgpa: subject.sgpa || '-'
+        };
+
+        const courses = gradeCard.courseRecords || subject.courses || [];
 
         let rowsHtml = '';
         courses.forEach((course, index) => {
             rowsHtml += `
                 <tr>
-                    <td>${course.serial_no || index + 1}</td>
-                    <td>${course.course_code || ''}</td>
-                    <td>${course.course_name || ''}</td>
+                    <td>${course.serial_no || course.serialNo || index + 1}</td>
+                    <td>${course.course_code || course.courseCode || ''}</td>
+                    <td>${course.course_name || course.courseName || ''}</td>
                     <td>${course.credits || ''}</td>
                     <td>${course.grade || ''}</td>
-                    <td>${course.gpa != null ? course.gpa : ''}</td>
+                    <td>${course.gpa != null ? course.gpa : (course.gradePoints || '')}</td>
                 </tr>
             `;
         });

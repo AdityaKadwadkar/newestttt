@@ -52,16 +52,20 @@ def login():
                 break
         
         if target_faculty:
+            # DEBUG LOG: Inspect the raw structure of the faculty data
+            print(f"DEBUG: Found Faculty '{username}'. Keys: {list(target_faculty.keys())}")
+            
             # 1. First Check Permission (Is this faculty an admin?)
             is_admin_val = target_faculty.get("is_admin")
-            is_admin = (str(is_admin_val).lower() == 'true') if is_admin_val is not None else False
+            print(f"DEBUG: 'is_admin' raw value for '{username}': {repr(is_admin_val)} (type: {type(is_admin_val)})")
+            
+            is_admin = (str(is_admin_val).lower().strip() == 'true') if is_admin_val is not None else False
             
             if not is_admin:
-                print(f"Security Alert: Faculty {username} attempted login but is NOT an admin.")
+                print(f"Security Alert: Faculty {username} attempted login but is NOT an admin in Contineo data.")
                 return json_response(False, None, "Access denied: User is not an admin", 403)
 
             # 2. Proceed with Password Check
-            print(f"Found faculty in Contineo. Data keys: {list(target_faculty.keys())}")
             
             # Default to 'password123' if the mock data is corrupted/missing password field
             fac_pass = str(target_faculty.get("password") or "password123").strip()

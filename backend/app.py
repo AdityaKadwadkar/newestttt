@@ -87,13 +87,14 @@ def create_app():
         try:
             print("Syncing Faculty Admins from Contineo...")
             faculty_list = ContineoService.get_all_faculty()
+            print(f"Startup Sync: Found {len(faculty_list)} faculty in Contineo.")
             for faculty in faculty_list:
+                f_id = faculty.get("faculty_id")
                 # Robust is_admin check: handles both boolean and string "true" from CSV
                 is_admin_val = faculty.get("is_admin")
-                is_admin = (str(is_admin_val).lower() == 'true') if is_admin_val is not None else False
+                is_admin = (str(is_admin_val).lower().strip() == 'true') if is_admin_val is not None else False
                 
                 if is_admin:
-                    f_id = faculty.get("faculty_id")
                     if f_id and not Admin.query.get(f_id) and not Admin.query.filter_by(username=f_id).first():
                         print(f"Provisioning Faculty Admin: {f_id}")
                         new_fac_admin = Admin(
@@ -105,6 +106,9 @@ def create_app():
                             role='admin'
                         )
                         db.session.add(new_fac_admin)
+                else:
+                    if f_id == 'FAC004':
+                        print(f"Startup Sync DEBUG: FAC004 found but is_admin is {is_admin_val}")
             db.session.commit()
         except Exception as e:
             print(f"Startup Faculty Sync Warning: {e}")

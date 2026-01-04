@@ -643,12 +643,12 @@ function displayVerificationResult(data, duration) {
     const formattedVC = data.vc ? JSON.stringify(data.vc, null, 2) : '{}';
     html += `
         <div class="detail-section" style="margin-top: 20px;">
-            <button onclick="toggleRawJSON()" class="btn-secondary" style="width: 100%; text-align: center; justify-content: center;">
+            <button onclick="window.toggleRawJSON()" class="btn-secondary" style="width: 100%; text-align: center; justify-content: center;">
                 📋 View Raw Credential (JSON)
             </button>
             <div id="rawJsonContainer" style="display: none; margin-top: 15px;">
                 <div style="background: #1e293b; padding: 15px; border-radius: 8px; position: relative;">
-                    <button onclick="copyRawJSON()" style="position: absolute; top: 10px; right: 10px; padding: 5px 10px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Copy</button>
+                    <button onclick="window.copyRawJSON()" style="position: absolute; top: 10px; right: 10px; padding: 5px 10px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Copy</button>
                     <pre id="rawJsonContent" style="color: #e2e8f0; font-family: monospace; white-space: pre-wrap; word-break: break-all; margin: 0; font-size: 13px; max-height: 400px; overflow-y: auto;">${formattedVC}</pre>
                 </div>
             </div>

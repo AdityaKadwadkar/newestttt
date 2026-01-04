@@ -88,9 +88,13 @@ def create_app():
             print("Syncing Faculty Admins from Contineo...")
             faculty_list = ContineoService.get_all_faculty()
             for faculty in faculty_list:
-                if faculty.get("is_admin"):
+                # Robust is_admin check: handles both boolean and string "true" from CSV
+                is_admin_val = faculty.get("is_admin")
+                is_admin = (str(is_admin_val).lower() == 'true') if is_admin_val is not None else False
+                
+                if is_admin:
                     f_id = faculty.get("faculty_id")
-                    if not Admin.query.get(f_id) and not Admin.query.filter_by(username=f_id).first():
+                    if f_id and not Admin.query.get(f_id) and not Admin.query.filter_by(username=f_id).first():
                         print(f"Provisioning Faculty Admin: {f_id}")
                         new_fac_admin = Admin(
                             admin_id=f_id,

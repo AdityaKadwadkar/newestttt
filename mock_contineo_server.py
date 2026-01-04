@@ -110,6 +110,13 @@ DASHBOARD_HTML = """
         <h2>Data Management</h2>
         <p>Upload CSV files to populate the mock database. <strong>Note: This replaces existing data.</strong></p>
         
+        <div style="background: #f9f9f9; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 13px; border-left: 4px solid #3498db;">
+            <strong>Mandatory Faculty Header:</strong><br>
+            <code>faculty_id,first_name,last_name,email,phone,department,designation,created_at,is_admin,password</code><br><br>
+            <strong>Mandatory Student Header:</strong><br>
+            <code>student_id,first_name,last_name,email,phone,department,batch_year,division,current_semester,course_enrolled,date_of_birth</code>
+        </div>
+        
         <form action="/upload" method="post" enctype="multipart/form-data">
             <div class="upload-group">
                 <label><strong>Students CSV:</strong></label><br>

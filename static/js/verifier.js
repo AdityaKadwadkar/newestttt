@@ -493,9 +493,9 @@ function displayVerificationResult(data, duration) {
 
     const isValid = data.valid;
     const status = data.status;
-    const subject = data.credential_subject || {};
-    const gradeCard = data.grade_card || {};
-    const credentialType = data.credential_type || '';
+    const subject = data.credential_subject || data.credentialSubject || {};
+    const gradeCard = data.grade_card || data.gradeCard || {};
+    const credentialType = (data.credential_type || data.credentialType || '').toLowerCase().trim();
 
     let statusClass = 'verification-info';
     let statusIcon = 'ℹ️';
@@ -538,7 +538,7 @@ function displayVerificationResult(data, duration) {
         `;
     }
     // Render transcript template
-    else if (credentialType.toLowerCase().includes('transcript')) {
+    else if (credentialType.includes('transcript')) {
         html += `
             <div class="detail-section">
                 ${renderTranscriptTemplate(data)}
@@ -562,34 +562,41 @@ function displayVerificationResult(data, duration) {
         `;
     }
 
-    // Render full KLE Grade Card template when grade card data is available OR from Subject data
-    else if (credentialType === 'markscard' || (gradeCard && gradeCard.credentialHeader)) {
+    // Render full KLE Grade Card template
+    else if (credentialType === 'markscard' || (gradeCard && (gradeCard.credentialHeader || gradeCard.credential_header))) {
         // PRIORITIZE: Verified Subject data (from the VC itself)
         // FALLBACK: Local DB data (gradeCard)
 
         const header = {
-            usn: subject.studentId || subject.id || subject.student_id || (gradeCard.credentialHeader?.usn) || '-',
-            student_name: subject.name || subject.student_name || (gradeCard.credentialHeader?.student_name) || '-',
-            branch: subject.department || subject.branch || (gradeCard.credentialHeader?.branch) || '-',
-            program: subject.program || (gradeCard.credentialHeader?.program) || '-',
-            total_credits: subject.totalCredits || subject.total_credits || (gradeCard.credentialHeader?.total_credits) || '-',
-            sgpa: subject.sgpa || (gradeCard.credentialHeader?.sgpa) || '-'
+            usn: subject.studentId || subject.student_id || subject.id || subject.usn || (gradeCard.credentialHeader?.usn || gradeCard.credential_header?.usn) || '-',
+            student_name: subject.name || subject.student_name || subject.fullName || subject.full_name || (gradeCard.credentialHeader?.student_name || gradeCard.credential_header?.student_name) || '-',
+            branch: subject.department || subject.branch || (gradeCard.credentialHeader?.branch || gradeCard.credential_header?.branch) || '-',
+            program: subject.program || (gradeCard.credentialHeader?.program || gradeCard.credential_header?.program) || '-',
+            total_credits: subject.totalCredits || subject.total_credits || (gradeCard.credentialHeader?.total_credits || gradeCard.credential_header?.total_credits) || '-',
+            sgpa: subject.sgpa || (gradeCard.credentialHeader?.sgpa || gradeCard.credential_header?.sgpa) || '-'
         };
 
-        const courses = (subject.courses && subject.courses.length > 0)
-            ? subject.courses
-            : (gradeCard.courseRecords || []);
+        const coursesSource = subject.courses || subject.courseRecords || subject.course_records || (gradeCard.courseRecords || gradeCard.course_records || []);
+        const courses = Array.isArray(coursesSource) ? coursesSource : [];
 
         let rowsHtml = '';
         courses.forEach((course, index) => {
+            // Robust course key mapping
+            const code = course.course_code || course.courseCode || course.code || '';
+            const name = course.course_name || course.courseName || course.name || '';
+            const creds = course.credits || course.credit || '';
+            const grd = course.grade || '';
+            const gpaVal = course.gpa != null ? course.gpa : (course.gradePoints || course.grade_points || '');
+            const sno = course.serial_no || course.serialNo || course.sno || (index + 1);
+
             rowsHtml += `
                 <tr>
-                    <td>${course.serial_no || course.serialNo || index + 1}</td>
-                    <td>${course.course_code || course.courseCode || ''}</td>
-                    <td>${course.course_name || course.courseName || ''}</td>
-                    <td>${course.credits || ''}</td>
-                    <td>${course.grade || ''}</td>
-                    <td>${course.gpa != null ? course.gpa : (course.gradePoints || '')}</td>
+                    <td>${sno}</td>
+                    <td>${code}</td>
+                    <td>${name}</td>
+                    <td>${creds}</td>
+                    <td>${grd}</td>
+                    <td>${gpaVal}</td>
                 </tr>
             `;
         });

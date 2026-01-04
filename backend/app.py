@@ -90,9 +90,16 @@ def create_app():
             print(f"Startup Sync: Found {len(faculty_list)} faculty in Contineo.")
             for faculty in faculty_list:
                 f_id = faculty.get("faculty_id")
-                # Robust is_admin check: handles both boolean and string "true" from CSV
+                # Robust is_admin check: handles boolean, string "true", and nulls
                 is_admin_val = faculty.get("is_admin")
-                is_admin = (str(is_admin_val).lower().strip() == 'true') if is_admin_val is not None else False
+                if is_admin_val is None:
+                    # If it's None, it might be an empty CSV cell. 
+                    # If it's a known faculty like FAC004, maybe log it differently or default
+                    is_admin = False
+                    if f_id == 'FAC004':
+                        print(f"Startup Sync WARNING: FAC004 has null is_admin. Treating as False. Check CSV data.")
+                else:
+                    is_admin = (str(is_admin_val).lower().strip() == 'true')
                 
                 if is_admin:
                     if f_id and not Admin.query.get(f_id) and not Admin.query.filter_by(username=f_id).first():

@@ -200,10 +200,18 @@ def upload_data():
                 normalized_records = []
                 for r in records:
                     r = {str(k).strip(): v for k, v in r.items()}
-                    if 'password' not in r:
+                    
+                    # Robust field handling: default if missing or null/empty
+                    if not r.get('password') or pd.isna(r.get('password')):
                         r['password'] = 'password123'
-                    if 'is_admin' not in r:
-                        r['is_admin'] = True # Default to True for mock faculty uploads to keep them as admins
+                    
+                    is_admin_raw = r.get('is_admin')
+                    if is_admin_raw is None or pd.isna(is_admin_raw) or str(is_admin_raw).strip() == "":
+                        r['is_admin'] = True  # Default to True for mock uploads
+                    else:
+                        # Convert to boolean if it's a string
+                        r['is_admin'] = str(is_admin_raw).lower().strip() == 'true'
+                        
                     normalized_records.append(r)
                 FACULTY = normalized_records
         

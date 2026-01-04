@@ -117,28 +117,22 @@ class CredentialService:
 
                 # Fetch marks from API
                 marks_rows = ContineoService.get_student_marks(student_id, target_semester) or []
-                
+                print(f"Allotment Debug: Found {len(marks_rows)} marks for student {student_id} in semester {target_semester}")
+
                 # Surgical fix: Ensure filtering to target_semester if it's provided
                 if target_semester:
-                    marks_rows = [mr for mr in marks_rows if str(mr.get('semester')) == str(target_semester)]
+                    filtered_marks = [mr for mr in marks_rows if str(mr.get('semester')) == str(target_semester)]
+                    if len(filtered_marks) != len(marks_rows):
+                        print(f"Allotment Debug: Filtered marks down to {len(filtered_marks)} for sem {target_semester}")
+                    marks_rows = filtered_marks
                 
-                # Fetch courses to map course details if marks only have course_id
-                # Optimization: fetch unique course IDs or fetch all courses once if possible.
-                # For now, fetch all courses to look up details.
-                # In real scenario, might want to fetch specifics. Mock API get_courses() is fine.
-                all_courses = {c['course_id']: c for c in (ContineoService.get_courses() or [])}
+                # Fetch courses to map course details
+                all_courses_list = ContineoService.get_courses() or []
+                print(f"Allotment Debug: Found {len(all_courses_list)} total courses in Contineo.")
+                all_courses = {c['course_id']: c for c in all_courses_list}
 
                 grade_to_gpa = {
-                    "S": 10,
-                    "O": 10,
-                    "A+": 9,
-                    "A": 9,
-                    "B+": 8,
-                    "B": 8,
-                    "C": 7,
-                    "P": 6,
-                    "F": 0,
-                    "AF": 0,
+                    "S": 10, "O": 10, "A+": 9, "A": 9, "B+": 8, "B": 8, "C": 7, "P": 6, "F": 0, "AF": 0,
                 }
 
                 derived_courses = []
@@ -147,18 +141,15 @@ class CredentialService:
                     course = all_courses.get(course_id)
                     
                     if not course:
-                        # Try searching by course_code if ID mismatch, or skip
+                        print(f"Allotment Debug: Course ID '{course_id}' NOT FOUND in course list for student {student_id}")
                         continue
                         
                     grade = (mr.get('grade') or "").strip().upper()
+                    # ... logic remains same ...
                     gpa_value = None
-                    
-                    # API 'marks' might have gpa or not.
                     if 'gpa' in mr and mr['gpa'] is not None:
-                        try:
-                            gpa_value = float(mr['gpa'])
-                        except Exception:
-                            gpa_value = None
+                        try: gpa_value = float(mr['gpa'])
+                        except Exception: gpa_value = None
                     
                     if gpa_value is None:
                         gpa_value = grade_to_gpa.get(grade, 0)
@@ -171,6 +162,7 @@ class CredentialService:
                         "gpa": gpa_value,
                     })
 
+                print(f"Allotment Debug: Successfully derived {len(derived_courses)} course records for VC.")
                 courses = derived_courses
 
             # Compute total credits and SGPA if courses are provided

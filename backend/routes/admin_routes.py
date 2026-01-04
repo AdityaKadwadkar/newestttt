@@ -433,3 +433,27 @@ def revoke_credential(credential_id):
         "is_revoked": True,
         "revocation_reason": reason
     }, "Credential revoked successfully")
+
+@bp.route('/system/reset', methods=['POST'])
+@jwt_required()
+@role_required('admin')
+def reset_system():
+    """Master Reset of all credential history"""
+    from backend.models import (
+        CredentialCourseRecord, CredentialGradeHeader, 
+        CredentialIssueLog, VerificationLog
+    )
+    try:
+        # Delete in order of dependencies
+        VerificationLog.query.delete()
+        CredentialCourseRecord.query.delete()
+        CredentialGradeHeader.query.delete()
+        CredentialIssueLog.query.delete()
+        Credential.query.delete()
+        CredentialBatch.query.delete()
+        
+        db.session.commit()
+        return json_response(True, None, "Master reset completed. All credential history cleared.")
+    except Exception as e:
+        db.session.rollback()
+        return json_response(False, None, str(e), 500)

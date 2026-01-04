@@ -622,3 +622,33 @@ async function handleRequestAction(requestId, status) {
         showAlert(error.message || 'Failed to update request', 'error');
     }
 }
+
+async function resetAllCredentials() {
+    if (!confirm('🚨 CAUTION: This will delete ALL issued credentials, batches, and history forever. Students will lose access to their current digital IDs. \n\nAre you absolutely sure you want to perform a Master Reset?')) {
+        return;
+    }
+
+    if (!confirm('FINAL CONFIRMATION: Type "RESET" in the next box if you really want to do this.')) {
+        return;
+    }
+
+    const check = prompt('Type RESET to confirm:');
+    if (check !== 'RESET') {
+        showAlert('Reset cancelled. Confirmation text did not match.', 'info');
+        return;
+    }
+
+    try {
+        showAlert('Performing master reset...', 'info');
+        const response = await apiRequest('/admin/system/reset', {
+            method: 'POST'
+        });
+
+        if (response.success) {
+            showAlert('Master reset successful! All history cleared.', 'success');
+            loadBatches(); // Refresh
+        }
+    } catch (error) {
+        showAlert(error.message || 'Reset failed', 'error');
+    }
+}

@@ -23,8 +23,49 @@ def login():
     
     admin = Admin.query.filter_by(username=username).first()
     
-    if not admin or not verify_password(admin.password_hash, password):
-        return json_response(False, None, "Invalid credentials", 401)
+    # 1. Try Local Auth
+    if admin and verify_password(admin.password_hash, password):
+        # Local auth success
+        pass
+    else:
+        # 2. Try Contineo Faculty Auth
+        from backend.services.contineo_service import ContineoService
+        from backend.utils.helpers import hash_password
+        
+        # Determine if input is email or ID - Contineo usually expects ID but let's be flexible
+        # For this implementation we assume 'username' is the Faculty ID (e.g., FAC001)
+        faculty_list = ContineoService.get_all_faculty()
+        target_faculty = None
+        
+        for fac in faculty_list:
+            # Check ID match
+            if str(fac.get("faculty_id")).upper() == str(username).upper():
+                target_faculty = fac
+                break
+        
+        if target_faculty and target_faculty.get("password") == password:
+            # Contineo Auth Success!
+            # Check if this faculty is marked as admin? (Optional logic)
+            # if not target_faculty.get("is_admin"): ... 
+            
+            if not admin:
+                # First time login - Create local Admin record
+                admin = Admin(
+                    admin_id=target_faculty.get("faculty_id"),
+                    username=target_faculty.get("faculty_id"), # Use ID as username
+                    email=target_faculty.get("email"),
+                    password_hash=hash_password(password), # Store hash locally for fallback
+                    full_name=f"{target_faculty.get('first_name')} {target_faculty.get('last_name')}",
+                    role='issuer' # Default role
+                )
+                db.session.add(admin)
+                db.session.commit()
+            else:
+                # Update existing local record password if needed
+                admin.password_hash = hash_password(password)
+                db.session.commit()
+        else:
+             return json_response(False, None, "Invalid credentials", 401)
     
     if not admin.is_active:
         return json_response(False, None, "Account is inactive", 403)

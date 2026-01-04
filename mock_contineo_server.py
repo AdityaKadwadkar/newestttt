@@ -171,32 +171,48 @@ def upload_data():
             file = request.files['students_file']
             if file.filename:
                 df = pd.read_csv(file)
+                # Normalize headers: strip whitespace
+                df.columns = [c.strip() for c in df.columns]
+                print(f"Uploaded Students CSV. Columns found: {list(df.columns)}")
+                
                 records = df.to_dict(orient='records')
                 # Ensure every student has a password field (default to date_of_birth if exists, else '123')
+                # Also normalize keys in each record
+                normalized_records = []
                 for r in records:
+                    r = {str(k).strip(): v for k, v in r.items()}
                     if 'password_dob' not in r:
                         r['password_dob'] = r.get('date_of_birth', '2000-01-01')
-                STUDENTS = records
+                    normalized_records.append(r)
+                STUDENTS = normalized_records
         
         # 2. Faculty
         if 'faculty_file' in request.files:
             file = request.files['faculty_file']
             if file.filename:
                 df = pd.read_csv(file)
+                # Normalize headers: strip whitespace
+                df.columns = [c.strip() for c in df.columns]
+                print(f"Uploaded Faculty CSV. Columns found: {list(df.columns)}")
+                
                 records = df.to_dict(orient='records')
                 # Ensure every faculty has a password and is_admin field
+                normalized_records = []
                 for r in records:
+                    r = {str(k).strip(): v for k, v in r.items()}
                     if 'password' not in r:
                         r['password'] = 'password123'
                     if 'is_admin' not in r:
                         r['is_admin'] = True # Default to True for mock faculty uploads to keep them as admins
-                FACULTY = records
+                    normalized_records.append(r)
+                FACULTY = normalized_records
         
         # 3. Courses
         if 'courses_file' in request.files:
             file = request.files['courses_file']
             if file.filename:
                 df = pd.read_csv(file)
+                df.columns = [c.strip() for c in df.columns]
                 COURSES = df.to_dict(orient='records')
         
         # 4. Marks
@@ -204,6 +220,7 @@ def upload_data():
             file = request.files['marks_file']
             if file.filename:
                 df = pd.read_csv(file)
+                df.columns = [c.strip() for c in df.columns]
                 MARKS = df.to_dict(orient='records')
                 
     except Exception as e:

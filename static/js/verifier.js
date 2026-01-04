@@ -563,17 +563,22 @@ function displayVerificationResult(data, duration) {
     }
 
     // Render full KLE Grade Card template when grade card data is available OR from Subject data
-    else if ((gradeCard && gradeCard.credentialHeader) || credentialType === 'markscard') {
-        const header = gradeCard.credentialHeader || {
-            usn: subject.studentId || subject.id || '-',
-            student_name: subject.name || '-',
-            branch: subject.department || '-',
-            program: subject.program || '-',
-            total_credits: subject.totalCredits || '-',
-            sgpa: subject.sgpa || '-'
+    else if (credentialType === 'markscard' || (gradeCard && gradeCard.credentialHeader)) {
+        // PRIORITIZE: Verified Subject data (from the VC itself)
+        // FALLBACK: Local DB data (gradeCard)
+
+        const header = {
+            usn: subject.studentId || subject.id || subject.student_id || (gradeCard.credentialHeader?.usn) || '-',
+            student_name: subject.name || subject.student_name || (gradeCard.credentialHeader?.student_name) || '-',
+            branch: subject.department || subject.branch || (gradeCard.credentialHeader?.branch) || '-',
+            program: subject.program || (gradeCard.credentialHeader?.program) || '-',
+            total_credits: subject.totalCredits || subject.total_credits || (gradeCard.credentialHeader?.total_credits) || '-',
+            sgpa: subject.sgpa || (gradeCard.credentialHeader?.sgpa) || '-'
         };
 
-        const courses = gradeCard.courseRecords || subject.courses || [];
+        const courses = (subject.courses && subject.courses.length > 0)
+            ? subject.courses
+            : (gradeCard.courseRecords || []);
 
         let rowsHtml = '';
         courses.forEach((course, index) => {

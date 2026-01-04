@@ -12,6 +12,7 @@ from backend.models import (
     Hackathon,
     CredentialGradeHeader,
     CredentialCourseRecord,
+    Student  # Added Student import
 )
 from backend.services.contineo_service import ContineoService
 from backend.utils.vc_generator import VCGenerator
@@ -424,6 +425,38 @@ class CredentialService:
         
         db.session.add(batch)
         
+        # FIX: Sync students to local DB before creating logs to prevent ForeignKey error
+        for student in students:
+            s_id = student.get("student_id")
+            if not s_id:
+                continue
+                
+            local_student = Student.query.get(s_id)
+            if not local_student:
+                try:
+                    new_student = Student(
+                        student_id=s_id,
+                        first_name=student.get('first_name'),
+                        last_name=student.get('last_name'),
+                        email=student.get('email'),
+                        department=student.get('department'),
+                        batch_year=student.get('batch_year'),
+                        division=student.get('division'),
+                        current_semester=student.get('current_semester'),
+                        course_enrolled=student.get('course_enrolled')
+                    )
+                    db.session.add(new_student)
+                except Exception as e:
+                    print(f"Error preparing student sync for {s_id}: {e}")
+        
+        # Flush to persist students so foreign keys work
+        try:
+            db.session.flush()
+        except Exception as e:
+            print(f"Error flushing student sync: {e}")
+            db.session.rollback()
+            return None, f"Database error preparing students: {str(e)}"
+
         # Create issue log entries
         for student in students:
             # Check student ID key standard (API vs DB)

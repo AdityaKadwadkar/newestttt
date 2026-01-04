@@ -253,7 +253,7 @@ function displayVerificationResult(data, duration) {
                 program: subject.program || '-',
                 total_credits: subject.totalCredits || subject.total_credits || '-',
                 sgpa: subject.sgpa || subject.gpa || '-',
-                semester: subject.semester || subject.target_semester || ''
+                semester: subject.semester || subject.target_semester || subject.current_semester || subject.currentSemester || ''
             },
             courseRecords: Array.isArray(subject.courses || subject.courseRecords || subject.course_records)
                 ? (subject.courses || subject.courseRecords || subject.course_records)
@@ -263,7 +263,7 @@ function displayVerificationResult(data, duration) {
 
     let statusHtml = `
         <div style="background: rgba(255,255,255,0.05); padding: 8px 12px; font-size: 11px; color: #888; border-radius: 6px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1);">
-            <strong>v3.3 Universal Engine</strong> | Recognized: ${credentialType} | Ref: ${subject.id || 'Legacy-Sig'}
+            <strong>v3.4 Universal Engine</strong> | Recognized: ${credentialType} | Ref: ${subject.id || 'Legacy-Sig'}
         </div>
         <div class="verification-${isValid ? 'success' : 'error'}" style="margin-bottom: 30px; border-left: 5px solid ${isValid ? '#00c851' : '#ff4444'}; padding-left: 20px;">
             <h2 style="margin:0; font-weight: 800;">Verification ${isValid ? 'VERIFIED ✅' : 'FAILED ❌'}</h2>

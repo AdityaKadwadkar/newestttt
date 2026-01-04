@@ -182,6 +182,7 @@ class CredentialService:
                 "program": additional_data.get("program") or student.get('course_enrolled') or "",
                 "father_or_mother_name": additional_data.get("father_or_mother_name") or "",
                 "exam_session": additional_data.get("exam_session") or "",
+                "semester": target_semester,
                 "courses": courses,
                 "total_credits": total_credits,
                 "sgpa": sgpa,

@@ -110,10 +110,9 @@ class CredentialService:
             # Expect a list of course dicts with: course_code, course_name, credits, grade, gpa.
             # If not provided, derive from MARKS + COURSE tables for the student's semester.
             courses = additional_data.get("courses") or []
+            target_semester = additional_data.get("semester") or student.get('current_semester')
 
             if not courses:
-                # Derive academic context
-                target_semester = additional_data.get("semester") or student.get('current_semester')
 
                 # Fetch marks from API
                 marks_rows = ContineoService.get_student_marks(student_id, target_semester) or []
@@ -514,7 +513,7 @@ class CredentialService:
                     program=student_data.get("program") or "",
                     father_or_mother_name=student_data.get("father_or_mother_name") or "",
                     exam_session=student_data.get("exam_session") or "",
-                    issue_date=vc_result["issued_date"].date(),
+                    issue_date=datetime.strptime(vc_result["issued_date"], '%Y-%m-%dT%H:%M:%SZ').date(),
                     total_credits=student_data.get("total_credits") or 0,
                     sgpa=student_data.get("sgpa") or 0.0,
                 )

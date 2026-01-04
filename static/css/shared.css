@@ -1,21 +1,17 @@
 /* Premium Shared Styles for KLE Tech Digital Credential System */
 :root {
-    /* Modern Slate Palette with Silver-Glass Cards */
-    --bg-dark: #0f172a;
-
-    /* Silverish Glass Effect for Boxes */
-    --bg-card: rgba(255, 255, 255, 0.08);
-    --bg-glass: rgba(255, 255, 255, 0.12);
-
+    /* Exact Palette from Reference */
+    --bg-dark: #020408;
+    --bg-card: rgba(13, 17, 23, 0.7);
+    --bg-glass: rgba(255, 255, 255, 0.03);
     --primary-color: #0070f3;
     --primary-glow: #0070f388;
     --secondary-color: #f59e0b;
-    --accent-blue: #38bdf8;
+    --accent-blue: #4facfe;
 
-    --light-text: #f1f5f9;
-    --muted-text: #94a3b8;
-    --border-glass: rgba(255, 255, 255, 0.2);
-    /* Lighter border for silver definition */
+    --light-text: #ffffff;
+    --muted-text: #8b949e;
+    --border-glass: rgba(255, 255, 255, 0.1);
 
     --font-main: 'Inter', sans-serif;
     --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -30,13 +26,12 @@
 
 body {
     font-family: var(--font-main);
-    background-color: var(--bg-dark);
-    /* Refined Deep Slate Gradient */
+    background-color: #02040a;
     background-image:
-        radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 90% 90%, rgba(0, 112, 243, 0.15) 0%, transparent 40%),
-        radial-gradient(ellipse at 50% 0%, rgba(15, 23, 42, 1) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 100%, #020617 0%, #0f172a 100%);
+        radial-gradient(circle at 10% 10%, rgba(0, 112, 243, 0.3) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(0, 112, 243, 0.25) 0%, transparent 40%),
+        radial-gradient(circle at 50% 0%, rgba(0, 112, 243, 0.2) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 100%, #050810 0%, #000 100%);
     background-attachment: fixed;
     color: var(--light-text);
     min-height: 100vh;

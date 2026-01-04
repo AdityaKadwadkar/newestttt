@@ -639,9 +639,37 @@ function displayVerificationResult(data, duration) {
         `;
     }
 
+    // Add Raw VC JSON Section
+    const formattedVC = data.vc ? JSON.stringify(data.vc, null, 2) : '{}';
+    html += `
+            < div class="detail-section" style = "margin-top: 20px;" >
+            <button onclick="toggleRawJSON()" class="btn-secondary" style="width: 100%; text-align: center; justify-content: center;">
+                📋 View Raw Credential (JSON)
+            </button>
+            <div id="rawJsonContainer" style="display: none; margin-top: 15px;">
+                <div style="background: #1e293b; padding: 15px; border-radius: 8px; position: relative;">
+                    <button onclick="copyRawJSON()" style="position: absolute; top: 10px; right: 10px; padding: 5px 10px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Copy</button>
+                    <pre id="rawJsonContent" style="color: #e2e8f0; font-family: monospace; white-space: pre-wrap; word-break: break-all; margin: 0; font-size: 13px; max-height: 400px; overflow-y: auto;">${formattedVC}</pre>
+                </div>
+            </div>
+            <script>
+                function toggleRawJSON() {
+                    const el = document.getElementById('rawJsonContainer');
+                    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                }
+                function copyRawJSON() {
+                    const text = document.getElementById('rawJsonContent').innerText;
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('JSON copied to clipboard!');
+                    });
+                }
+            </script>
+        </div >
+            `;
+
     // Append minimal meta info
     html += `
-        <div class="detail-section">
+            < div class="detail-section" >
             <h3>Verification Metadata</h3>
             <table class="credential-details-table">
                 <tr>
@@ -665,16 +693,16 @@ function displayVerificationResult(data, duration) {
                     <td>${formatDateTime(data.verification_timestamp) || '-'}</td>
                 </tr>
             </table>
-        </div>
-    `;
+        </div >
+            `;
 
     // Add credential-specific details
     if (data.credential_type === 'markscard') {
         html += `
-            <div class="info-item" style="margin-top: 15px;">
+            < div class="info-item" style = "margin-top: 15px;" >
                 <div class="info-label">Course</div>
                 <div class="info-value">${subject.course || '-'}</div>
-            </div>
+            </div >
             <div class="info-item">
                 <div class="info-label">Marks</div>
                 <div class="info-value">${subject.marksObtained || '-'} / ${subject.maxMarks || '-'}</div>
@@ -688,16 +716,16 @@ function displayVerificationResult(data, duration) {
 
     if (data.status === 'revoked') {
         html += `
-            <div class="verification-error" style="margin-top: 20px;">
+            < div class="verification-error" style = "margin-top: 20px;" >
                 <h4>⚠️ Credential Revoked</h4>
                 <p>This credential has been revoked by the issuer.</p>
                 ${data.revoked_date ? `<p><strong>Revoked on:</strong> ${formatDateTime(data.revoked_date)}</p>` : ''}
                 ${data.revocation_reason ? `<p><strong>Reason:</strong> ${data.revocation_reason}</p>` : ''}
-            </div>
-        `;
+            </div >
+            `;
     }
 
-    html += `</div>`;
+    html += `</div > `;
 
     resultContent.innerHTML = html;
 }
@@ -707,14 +735,14 @@ function displayError(message) {
     const resultContent = document.getElementById('resultContent');
 
     resultContent.innerHTML = `
-        <div class="verification-error">
+            < div class="verification-error" >
             <h2>❌ Verification Failed</h2>
             <p>${message}</p>
             <p style="margin-top: 10px; font-size: 14px;">
                 Please check the credential ID and try again. If the problem persists, the credential may not exist or may have been revoked.
             </p>
-        </div>
-    `;
+        </div >
+            `;
 }
 
 // Tab switching
@@ -727,10 +755,10 @@ function showVerifyTab(tabName) {
         btn.classList.remove('active');
     });
 
-    const activeTab = document.getElementById(`${tabName}Tab`);
+    const activeTab = document.getElementById(`${tabName} Tab`);
     if (activeTab) activeTab.classList.remove('hidden');
 
-    const activeBtn = document.getElementById(`tab-${tabName}`);
+    const activeBtn = document.getElementById(`tab - ${tabName} `);
     if (activeBtn) activeBtn.classList.add('active');
 }
 

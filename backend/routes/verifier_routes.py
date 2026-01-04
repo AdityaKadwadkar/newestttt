@@ -93,6 +93,7 @@ def verify_credential(credential_id):
                 "courseRecords": [c.to_dict() for c in course_rows]
             } if header else None,
             "external_verification": external_result, # Add external result
+            "vc": vc_data, # Return full VC JSON for "View Raw" feature
             "verification_timestamp": datetime.utcnow().isoformat()
         }
         

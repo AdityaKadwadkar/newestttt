@@ -248,8 +248,8 @@ class CredentialService:
                 credits = int(course.get('credits') or 0)
                 
                 course_entry = {
-                    "course_code": course.get('course_code'),
-                    "course_name": course.get('course_name'),
+                    "courseCode": course.get('course_code'),
+                    "courseName": course.get('course_name'),
                     "credits": str(credits),
                     "grade": grade,
                     "gpa": "{:.2f}".format(gpa_value)
@@ -314,14 +314,17 @@ class CredentialService:
                 
             student_data.update({
                 "program": program,
-                "branch": branch, # Redundant but explicit
-                "year_of_completion": yoc,
+                "branch": branch, 
+                "studentName": student_data.get('full_name'),
+                "studentId": student_id,
+                "batchYear": str(batch_year),
+                "yearOfCompletion": yoc,
                 "semesters": final_semesters,
-                "total_credits": str(total_earned_credits),
+                "totalCredits": str(total_earned_credits),
                 "cgpa": "{:.2f}".format(cgpa),
-                "cgpa_in_words": CredentialService._get_number_in_words(cgpa),
-                "result_class": result_class,
-                "date_of_issue": format_date(datetime.utcnow())
+                "cgpaInWords": CredentialService._get_number_in_words(cgpa),
+                "resultClass": result_class,
+                "dateOfIssue": format_date(datetime.utcnow())
             })
             
         elif credential_type == "workshop":

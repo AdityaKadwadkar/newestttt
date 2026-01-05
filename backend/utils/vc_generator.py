@@ -23,7 +23,33 @@ class VCGenerator:
     CONTEXT = [
         "https://www.w3.org/2018/credentials/v1",
         "https://schema.org/",
-        "https://w3id.org/security/suites/ed25519-2020/v1"
+        "https://w3id.org/security/suites/ed25519-2020/v1",
+        {
+            "academic": "https://credentials.kle.edu/academic#",
+            "Transcript": "academic:Transcript",
+            "Markscard": "academic:Markscard",
+            "CourseCompletion": "academic:CourseCompletion",
+            "Workshop": "academic:Workshop",
+            "Hackathon": "academic:Hackathon",
+            "semesters": "academic:semesters",
+            "courses": "academic:courses",
+            "course_code": "academic:course_code",
+            "course_name": "academic:course_name",
+            "credits": "academic:credits",
+            "grade": "academic:grade",
+            "gpa": "academic:gpa",
+            "sgpa": "academic:sgpa",
+            "cgpa": "academic:cgpa",
+            "cgpa_in_words": "academic:cgpa_in_words",
+            "result_class": "academic:result_class",
+            "year_of_completion": "academic:year_of_completion",
+            "total_credits": "academic:total_credits",
+            "date_of_issue": "academic:date_of_issue",
+            "program": "academic:program",
+            "branch": "academic:branch",
+            "semester": "academic:semester",
+            "father_or_mother_name": "academic:father_or_mother_name"
+        }
     ]
     
     KEYSTORE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "issuer_key.json")
@@ -117,7 +143,8 @@ class VCGenerator:
         
         # 1. Create Proof Template
         # Fragment MUST be the key identifier (the part after did:key:)
-        key_fragment = did.split(":")[-1]
+        # Use standard #key-1 fragment for did:key
+        key_fragment = "key-1"
         created_date = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
         proof = {
@@ -204,10 +231,23 @@ class VCGenerator:
         if issuer_info.get('credential_metadata'):
             subject.update(issuer_info['credential_metadata'])
 
+        type_list = ["VerifiableCredential"]
+        if credential_type:
+            # Map simple types to capitalized PascalCase for JSON-LD type
+            type_map = {
+                "transcript": "Transcript",
+                "markscard": "Markscard",
+                "course_completion": "CourseCompletion",
+                "workshop": "Workshop",
+                "hackathon": "Hackathon"
+            }
+            type_name = type_map.get(credential_type) or credential_type.capitalize()
+            type_list.append(type_name)
+
         credential = {
             "@context": VCGenerator.CONTEXT,
             "id": credential_id,
-            "type": ["VerifiableCredential"],
+            "type": type_list,
             "issuer": {
                 "id": issuer_did,
                 "name": issuer_info.get("name", "KLE Technological University")

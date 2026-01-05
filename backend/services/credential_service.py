@@ -181,10 +181,10 @@ class CredentialService:
                 "program": additional_data.get("program") or student.get('course_enrolled') or "",
                 "father_or_mother_name": additional_data.get("father_or_mother_name") or "",
                 "exam_session": additional_data.get("exam_session") or "",
-                "semester": target_semester,
+                "semester": str(target_semester),
                 "courses": courses,
-                "total_credits": total_credits,
-                "sgpa": sgpa,
+                "total_credits": str(total_credits),
+                "sgpa": "{:.2f}".format(sgpa),
             })
         
         elif credential_type == "transcript":
@@ -250,9 +250,9 @@ class CredentialService:
                 course_entry = {
                     "course_code": course.get('course_code'),
                     "course_name": course.get('course_name'),
-                    "credits": credits,
+                    "credits": str(credits),
                     "grade": grade,
-                    "gpa": gpa_value
+                    "gpa": "{:.2f}".format(gpa_value)
                 }
                 
                 semesters_data[sem_num]["courses"].append(course_entry)
@@ -282,10 +282,10 @@ class CredentialService:
                 
                 # Only include if there is data
                 final_semesters.append({
-                    "semester": s_num,
+                    "semester": str(s_num),
                     "courses": data["courses"],
-                    "sgpa": sgpa,
-                    "credits": sem_credits
+                    "sgpa": "{:.2f}".format(sgpa),
+                    "credits": str(sem_credits)
                 })
                 
                 total_earned_credits += sem_credits
@@ -317,8 +317,8 @@ class CredentialService:
                 "branch": branch, # Redundant but explicit
                 "year_of_completion": yoc,
                 "semesters": final_semesters,
-                "total_credits": total_earned_credits,
-                "cgpa": cgpa,
+                "total_credits": str(total_earned_credits),
+                "cgpa": "{:.2f}".format(cgpa),
                 "cgpa_in_words": CredentialService._get_number_in_words(cgpa),
                 "result_class": result_class,
                 "date_of_issue": format_date(datetime.utcnow())

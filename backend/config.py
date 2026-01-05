@@ -18,6 +18,13 @@ class Config:
     # ONEST Network Configuration
     ONEST_BASE_URL = os.environ.get('ONEST_BASE_URL') or 'https://onest.network'
     ONEST_PROVIDER_ID = os.environ.get('ONEST_PROVIDER_ID') or 'kle-tech-university'
+    ONEST_SUBSCRIBER_ID = os.environ.get('ONEST_SUBSCRIBER_ID') or 'kle-tech-university'
+    ONEST_UNIQUE_KEY_ID = os.environ.get('ONEST_UNIQUE_KEY_ID') or 'kle-key-1'
+    
+    # ONEST Security (Ed25519 Hex Strings)
+    # WARNING: In production, these should be loaded from secure environment variables
+    ONEST_PRIVATE_KEY = os.environ.get('ONEST_PRIVATE_KEY') or '0000000000000000000000000000000000000000000000000000000000000000'
+    ONEST_PUBLIC_KEY = os.environ.get('ONEST_PUBLIC_KEY') or '0000000000000000000000000000000000000000000000000000000000000000'
     
     # DID Configuration
     DID_METHOD = 'did:key'

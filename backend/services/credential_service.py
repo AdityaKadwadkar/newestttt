@@ -485,11 +485,19 @@ class CredentialService:
             # --- DE-DUPLICATION LOGIC ---
             existing_credential = None
             if credential_type == "markscard":
-                # For markscards, we check the specific exam session
-                exam_session = student_data.get("exam_session")
+                # For markscards, we check the specific exam session + semester
+                # We create a compound key to ensure uniqueness across semesters
+                raw_session = student_data.get("exam_session") or "General"
+                semester_val = student_data.get("semester") or "?"
+                
+                # Compound key format: "Session (Sem X)"
+                compound_exam_session = f"{raw_session} (Sem {semester_val})"
+                # Update the student_data so the VC and Header use this unique string
+                student_data["exam_session"] = compound_exam_session
+                
                 header = CredentialGradeHeader.query.filter_by(
                     usn=student_id, 
-                    exam_session=exam_session
+                    exam_session=compound_exam_session
                 ).first()
                 if header:
                     existing_credential = Credential.query.get(header.credential_id)
@@ -501,7 +509,7 @@ class CredentialService:
                 ).first()
 
             if existing_credential:
-                # Update existing record instead of creating new
+                print(f"De-duplication: Found existing '{credential_type}' for {student_id}. Updating instead of creating.")
                 credential = existing_credential
                 credential.batch_id = batch_id
                 credential.vc_json = json.dumps(vc_result["credential"])
@@ -535,29 +543,43 @@ class CredentialService:
                 courses = student_data.get("courses") or []
 
                 # Find or create header
-                header = CredentialGradeHeader.query.filter_by(credential_id=credential_id).first()
-                if not header:
-                    header = CredentialGradeHeader(credential_id=credential_id)
-                    db.session.add(header)
+                # Note: credential.credential_id works for both new and updated
+                header = CredentialGradeHeader.query.filter_by(credential_id=credential.credential_id).first()
                 
-                header.usn = student_data.get("student_id")
-                header.student_name = f"{student_data.get('first_name', '')} {student_data.get('last_name', '')}".strip()
-                header.branch = student_data.get("department") or ""
-                header.program = student_data.get("program") or ""
-                header.father_or_mother_name = student_data.get("father_or_mother_name") or ""
-                header.exam_session = student_data.get("exam_session") or ""
-                header.issue_date = datetime.strptime(vc_result["issued_date"], '%Y-%m-%dT%H:%M:%SZ').date()
-                header.total_credits = student_data.get("total_credits") or 0
-                header.sgpa = student_data.get("sgpa") or 0.0
+                if not header:
+                    header = CredentialGradeHeader(
+                        credential_id=credential.credential_id,
+                        usn=student_id,
+                        student_name=f"{student_data.get('first_name', '')} {student_data.get('last_name', '')}".strip(),
+                        branch=student_data.get('department', ''),
+                        program=student_data.get('program', ''),
+                        father_or_mother_name=student_data.get('father_or_mother_name', ''),
+                        exam_session=student_data.get("exam_session"), # Uses compound session
+                        issue_date=datetime.strptime(vc_result["issued_date"], '%Y-%m-%dT%H:%M:%SZ').date(),
+                        total_credits=int(student_data.get('total_credits', 0) or 0),
+                        sgpa=float(student_data.get('sgpa', 0) or 0.0)
+                    )
+                    db.session.add(header)
+                else:
+                    # Update existing header
+                    header.usn = student_data.get("student_id")
+                    header.student_name = f"{student_data.get('first_name', '')} {student_data.get('last_name', '')}".strip()
+                    header.branch = student_data.get("department") or ""
+                    header.program = student_data.get("program") or ""
+                    header.father_or_mother_name = student_data.get("father_or_mother_name") or ""
+                    header.exam_session = student_data.get("exam_session")
+                    header.issue_date = datetime.strptime(vc_result["issued_date"], '%Y-%m-%dT%H:%M:%SZ').date()
+                    header.total_credits = int(student_data.get("total_credits", 0) or 0)
+                    header.sgpa = float(student_data.get("sgpa", 0) or 0.0)
 
                 # Clear and re-populate course rows to handle changes
                 from backend.models import CredentialCourseRecord
-                CredentialCourseRecord.query.filter_by(credential_id=credential_id).delete()
+                CredentialCourseRecord.query.filter_by(credential_id=credential.credential_id).delete()
                 
                 # Course rows
                 for idx, c in enumerate(courses, start=1):
                     record = CredentialCourseRecord(
-                        credential_id=credential_id,
+                        credential_id=credential.credential_id,
                         serial_no=idx,
                         course_code=c.get("course_code", ""),
                         course_name=c.get("course_name", ""),

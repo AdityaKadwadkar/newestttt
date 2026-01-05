@@ -247,12 +247,13 @@ class CredentialService:
                 
                 credits = int(course.get('credits') or 0)
                 
+                # 250: Restructure Course Object for ChatGPT format
                 course_entry = {
-                    "courseCode": course.get('course_code'),
-                    "courseName": course.get('course_name'),
-                    "credits": str(credits),
+                    "course_code": course.get('course_code'),
+                    "course_name": course.get('course_name'),
+                    "credits": credits,
                     "grade": grade,
-                    "gpa": "{:.2f}".format(gpa_value)
+                    "grade_points": gpa_value
                 }
                 
                 semesters_data[sem_num]["courses"].append(course_entry)
@@ -262,13 +263,9 @@ class CredentialService:
             # 3. Calculate SGPA for each semester
             final_semesters = []
             total_earned_credits = 0
-            sum_sgpa = 0.0
-            semesters_count_for_cgpa = 0
             
             # Sort semesters 1 to 8
             sorted_sem_nums = sorted(semesters_data.keys())
-            
-            # Limit to max 8 semesters (though usually won't exceed)
             sorted_sem_nums = [s for s in sorted_sem_nums if 1 <= s <= 8]
             
             for s_num in sorted_sem_nums:
@@ -280,17 +277,21 @@ class CredentialService:
                 if sem_credits > 0:
                     sgpa = round(sem_wgpa / sem_credits, 2)
                 
-                # Only include if there is data
+                # Synthesis of academic year (e.g. 2021-22)
+                # Sem 1/2 -> Batch year
+                # Sem 3/4 -> Batch year + 1
+                ay_start = batch_year + ((s_num - 1) // 2)
+                ay_str = f"{ay_start}-{(ay_start+1)%100:02d}"
+
                 final_semesters.append({
-                    "semester": str(s_num),
+                    "semester": s_num,
+                    "academic_year": ay_str,
                     "courses": data["courses"],
-                    "sgpa": "{:.2f}".format(sgpa),
-                    "credits": str(sem_credits)
+                    "sgpa": sgpa,
+                    "total_credits": sem_credits
                 })
                 
                 total_earned_credits += sem_credits
-                sum_sgpa += sgpa
-                semesters_count_for_cgpa += 1
             
             # 4. Calculate CGPA (Credit Weighted)
             cgpa = 0.0
@@ -301,31 +302,63 @@ class CredentialService:
             # 5. Result Classification
             result_class = CredentialService._calculate_result_class(cgpa)
             
-            # 6. Year of Completion Logic (CORRECTED)
-            # IF (batch_year + 4) <= current_year AND has_all_8: "Completed"
-            # ELSE: "Pursuing"
-            
+            # 6. Year of Completion Logic
             has_all_8 = (len(sorted_sem_nums) >= 8)
-            
-            if (batch_year + 4) <= current_yr and has_all_8:
-                yoc = "Completed"
-            else:
-                yoc = "Pursuing"
+            yoc = "Completed" if (batch_year + 4) <= current_yr and has_all_8 else "Pursuing"
                 
-            student_data.update({
-                "program": program,
-                "branch": branch, 
-                "studentName": student_data.get('full_name'),
-                "studentId": student_id,
-                "batchYear": str(batch_year),
-                "yearOfCompletion": yoc,
-                "semesters": final_semesters,
-                "totalCredits": str(total_earned_credits),
-                "cgpa": "{:.2f}".format(cgpa),
-                "cgpaInWords": CredentialService._get_number_in_words(cgpa),
-                "resultClass": result_class,
-                "dateOfIssue": format_date(datetime.utcnow())
-            })
+            # --- FINAL NESTED RESTRUCTURE (ChatGPT Format) ---
+            restructured_data = {
+                "student": {
+                    "student_id": student_id,
+                    "full_name": student_data.get('full_name'),
+                    "first_name": student.get('first_name'),
+                    "last_name": student.get('last_name'),
+                    "date_of_birth": student.get('date_of_birth', '2003-05-12'), # Placeholder or actual if exists
+                    "email": student.get('email'),
+                    "phone": student.get('phone', '900000001')
+                },
+                "program_details": {
+                    "degree": "B.Tech",
+                    "department": branch,
+                    "batch_year": batch_year,
+                    "enrollment_date": f"{batch_year}-08-01",
+                    "expected_graduation_year": batch_year + 4
+                },
+                "academic_record": {
+                    "grading_system": "10-point scale",
+                    "semesters": final_semesters,
+                    "cumulative_summary": {
+                        "cgpa": cgpa,
+                        "total_credits_earned": total_earned_credits,
+                        "classification": result_class
+                    }
+                },
+                "institution": {
+                    "name": "KLE Technological University",
+                    "location": "Hubballi, Karnataka, India",
+                    "affiliation": "UGC"
+                },
+                "document_type": "academic_transcript",
+                "issued_for": f"Complete academic record up to current semester ({yoc})"
+            }
+
+            # Optional metadata blocks for VC root (will be moved by VCGenerator)
+            restructured_data["credentialStatus"] = {
+                "id": f"https://credentials.kle.edu/status/transcript/{datetime.utcnow().year}/0#0",
+                "type": "StatusList2021Entry",
+                "statusPurpose": "revocation",
+                "statusListIndex": "0",
+                "statusListCredential": f"https://credentials.kle.edu/status/transcript/{datetime.utcnow().year}"
+            }
+            restructured_data["credentialSchema"] = {
+                "id": "https://credentials.kle.edu/schemas/academic-transcript.json",
+                "type": "JsonSchemaValidator2018"
+            }
+            
+            # Injecting student_id for VCGenerator lookup
+            restructured_data["student_id"] = student_id
+            
+            return restructured_data
             
         elif credential_type == "workshop":
             # WORKSHOP remains LOCAL

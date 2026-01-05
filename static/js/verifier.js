@@ -131,23 +131,14 @@ function renderMarkscardTemplate(data) {
 function renderTranscriptTemplate(data) {
     const vcData = data.vc_data || {};
     const subject = vcData.credentialSubject || vcData || {};
-    
-    // Support for ChatGPT's Nested Format
-    const academic = subject.academic_record || {};
-    const summary = academic.cumulative_summary || {};
-    const programDetails = subject.program_details || {};
-    const student = subject.student || {};
-
-    const semesters = academic.semesters || subject.semesters || [];
+    const semesters = subject.semesters || [];
 
     // Use robust name extraction
-    const studentName = student.full_name || getStudentName(subject);
-    const usn = student.student_id || subject.usn || subject.student_id || subject.id || '-';
-    
-    // Degree/Program
-    const program = programDetails.degree || subject.program || 'Bachelor of Technology';
-    const branch = programDetails.department || subject.branch || subject.department || '-';
-    const batchYear = programDetails.batch_year || subject.batch_year || subject.year_of_start || '';
+    const studentName = getStudentName(subject);
+    const usn = subject.usn || subject.student_id || subject.id || '-';
+    const program = subject.program || 'Bachelor of Technology';
+    const branch = subject.branch || subject.department || '-';
+    const batchYear = subject.batch_year || subject.year_of_start || '';
 
     let semestersHtml = '';
     semesters.forEach((sem, idx) => {
@@ -177,14 +168,11 @@ function renderTranscriptTemplate(data) {
                     <tbody>${coursesHtml || '<tr><td colspan="4" style="text-align:center">No records</td></tr>'}</tbody>
                 </table>
                 <div style="text-align: right; font-weight: bold; padding: 5px 10px; border-top: 1px solid #000;">
-                    SGPA: ${sem.sgpa || sem.gpa || '-'} | Credits: ${sem.total_credits || sem.credits || '-'}
+                    SGPA: ${sem.sgpa || sem.gpa || '-'}
                 </div>
             </div>
         `;
     });
-
-    const cgpa = summary.cgpa || subject.cgpa || '-';
-    const totalCredits = summary.total_credits_earned || subject.totalCredits || subject.total_credits || '-';
 
     return `
         <div class="markscard-wrapper" style="color: #000 !important; background: white !important; font-family: 'Times New Roman', serif; padding: 40px; max-width: 900px; margin: 0 auto;">
@@ -222,8 +210,8 @@ function renderTranscriptTemplate(data) {
             </div>
 
             <div style="margin-top: 30px; border: 1px solid #000; padding: 15px; text-align: center; background: #f9f9f9;">
-                <div style="margin-bottom: 5px;">CGPA: <strong>${cgpa}</strong></div>
-                <div style="font-size: 14px;">Total Credits Earned: ${totalCredits}</div>
+                <div style="margin-bottom: 5px;">CGPA</div>
+                <div style="font-size: 24px; font-weight: bold;">${subject.cgpa || '-'}</div>
                 <div style="font-size: 12px; margin-top: 5px;">(Cumulative Grade Point Average)</div>
             </div>
             
@@ -246,10 +234,6 @@ function renderTranscriptTemplate(data) {
 // ---------------------------------------------------------
 
 function getStudentName(subject) {
-    if (!subject) return '-';
-    // Check nested student object first (ChatGPT format)
-    if (subject.student && subject.student.full_name) return subject.student.full_name;
-    
     return subject.student_name || subject.name || subject.full_name || subject.fullName ||
         (subject.first_name ? `${subject.first_name} ${subject.last_name || ''}` : '-') || '-';
 }
@@ -438,11 +422,11 @@ function displayVerificationResult(data, duration) {
         vc_data: data.vc || {},
         grade_card: gradeCard.credentialHeader ? gradeCard : {
             credentialHeader: {
-                usn: subject.student?.student_id || subject.studentId || subject.student_id || subject.id || subject.usn || '-',
-                student_name: subject.student?.full_name || subject.name || subject.student_name || subject.fullName || subject.full_name || '-',
-                branch: subject.program_details?.department || subject.department || subject.branch || '-',
-                program: subject.program_details?.degree || subject.program || '-',
-                total_credits: subject.academic_record?.cumulative_summary?.total_credits_earned || subject.totalCredits || subject.total_credits || '-',
+                usn: subject.studentId || subject.student_id || subject.id || subject.usn || '-',
+                student_name: subject.name || subject.student_name || subject.fullName || subject.full_name || '-',
+                branch: subject.department || subject.branch || '-',
+                program: subject.program || '-',
+                total_credits: subject.totalCredits || subject.total_credits || '-',
                 sgpa: subject.sgpa || subject.gpa || '-',
                 semester: subject.semester || subject.target_semester || subject.current_semester || subject.currentSemester || ''
             },
@@ -454,7 +438,7 @@ function displayVerificationResult(data, duration) {
 
     let statusHtml = `
         <div style="background: rgba(255,255,255,0.05); padding: 8px 12px; font-size: 11px; color: #888; border-radius: 6px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1);">
-            <strong>v3.4 Universal Engine</strong> | Recognized: ${credentialType} | Ref: ${subject.id || 'Legacy-Sig'}
+            <strong>v3.3 Universal Engine</strong> | Recognized: ${credentialType} | Ref: ${subject.id || 'Legacy-Sig'}
         </div>
         <div class="verification-${isValid ? 'success' : 'error'}" style="margin-bottom: 30px; border-left: 5px solid ${isValid ? '#00c851' : '#ff4444'}; padding-left: 20px;">
             <h2 style="margin:0; font-weight: 800;">Verification ${isValid ? 'VERIFIED ✅' : 'FAILED ❌'}</h2>

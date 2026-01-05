@@ -61,8 +61,8 @@ class TestTranscriptLogic(unittest.TestCase):
         mock_contineo.get_courses.return_value = courses
         
         data = CredentialService.get_student_data_for_credential("STU1", "transcript")
-        print(f"  Result: {data['yearOfCompletion']}")
-        self.assertEqual(data['yearOfCompletion'], "Pursuing", 
+        print(f"  Result: {data['year_of_completion']}")
+        self.assertEqual(data['year_of_completion'], "Pursuing", 
                          "Strict Rule Failed: Batch 2021 (Grad Year 2025) <= Current Year 2025 should be 'Pursuing'")
 
         # --- Scenario 2: Batch 2022 ---
@@ -73,8 +73,8 @@ class TestTranscriptLogic(unittest.TestCase):
         mock_contineo.get_student.return_value = get_student(2022)
         # Using same 8-sem data from above
         data = CredentialService.get_student_data_for_credential("STU1", "transcript")
-        print(f"  Result: {data['yearOfCompletion']}")
-        self.assertEqual(data['yearOfCompletion'], "Completed",
+        print(f"  Result: {data['year_of_completion']}")
+        self.assertEqual(data['year_of_completion'], "Completed",
                          "Strict Rule Failed: Batch 2022 with 8 semesters should be 'Completed'")
 
         # --- Scenario 3: Batch 2022 with < 8 Semesters ---
@@ -85,8 +85,8 @@ class TestTranscriptLogic(unittest.TestCase):
         mock_contineo.get_student_marks.return_value = short_marks
         
         data = CredentialService.get_student_data_for_credential("STU1", "transcript")
-        print(f"  Result: {data['yearOfCompletion']}")
-        self.assertEqual(data['yearOfCompletion'], "Pursuing",
+        print(f"  Result: {data['year_of_completion']}")
+        self.assertEqual(data['year_of_completion'], "Pursuing",
                          "Strict Rule Failed: Batch 2022 with < 8 semesters should be 'Pursuing'")
 
     @patch('backend.services.credential_service.ContineoService')
@@ -118,12 +118,12 @@ class TestTranscriptLogic(unittest.TestCase):
         data = CredentialService.get_student_data_for_credential("STU1", "transcript")
         
         print(f"  CGPA: {data['cgpa']}")
-        print(f"  Words: {data['cgpaInWords']}")
-        print(f"  Class: {data['resultClass']}")
+        print(f"  Words: {data['cgpa_in_words']}")
+        print(f"  Class: {data['result_class']}")
         
-        self.assertEqual(data['cgpa'], 8.50)
-        self.assertEqual(data['cgpaInWords'], "Eight Point Five Zero")
-        self.assertEqual(data['resultClass'], "First Class with Distinction") # >= 7.75
+        self.assertEqual(data['cgpa'], "8.50")
+        self.assertEqual(data['cgpa_in_words'], "Eight Point Five Zero")
+        self.assertEqual(data['result_class'], "First Class with Distinction") # >= 7.75
 
 if __name__ == '__main__':
     unittest.main()

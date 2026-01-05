@@ -247,13 +247,12 @@ class CredentialService:
                 
                 credits = int(course.get('credits') or 0)
                 
-                # 250: Restructure Course Object for ChatGPT format
                 course_entry = {
                     "course_code": course.get('course_code'),
                     "course_name": course.get('course_name'),
-                    "credits": credits,
+                    "credits": str(credits),
                     "grade": grade,
-                    "grade_points": gpa_value
+                    "gpa": "{:.2f}".format(gpa_value)
                 }
                 
                 semesters_data[sem_num]["courses"].append(course_entry)
@@ -263,9 +262,13 @@ class CredentialService:
             # 3. Calculate SGPA for each semester
             final_semesters = []
             total_earned_credits = 0
+            sum_sgpa = 0.0
+            semesters_count_for_cgpa = 0
             
             # Sort semesters 1 to 8
             sorted_sem_nums = sorted(semesters_data.keys())
+            
+            # Limit to max 8 semesters (though usually won't exceed)
             sorted_sem_nums = [s for s in sorted_sem_nums if 1 <= s <= 8]
             
             for s_num in sorted_sem_nums:
@@ -277,21 +280,17 @@ class CredentialService:
                 if sem_credits > 0:
                     sgpa = round(sem_wgpa / sem_credits, 2)
                 
-                # Synthesis of academic year (e.g. 2021-22)
-                # Sem 1/2 -> Batch year
-                # Sem 3/4 -> Batch year + 1
-                ay_start = batch_year + ((s_num - 1) // 2)
-                ay_str = f"{ay_start}-{(ay_start+1)%100:02d}"
-
+                # Only include if there is data
                 final_semesters.append({
-                    "semester": s_num,
-                    "academic_year": ay_str,
+                    "semester": str(s_num),
                     "courses": data["courses"],
-                    "sgpa": sgpa,
-                    "total_credits": sem_credits
+                    "sgpa": "{:.2f}".format(sgpa),
+                    "credits": str(sem_credits)
                 })
                 
                 total_earned_credits += sem_credits
+                sum_sgpa += sgpa
+                semesters_count_for_cgpa += 1
             
             # 4. Calculate CGPA (Credit Weighted)
             cgpa = 0.0
@@ -302,63 +301,28 @@ class CredentialService:
             # 5. Result Classification
             result_class = CredentialService._calculate_result_class(cgpa)
             
-            # 6. Year of Completion Logic
+            # 6. Year of Completion Logic (CORRECTED)
+            # IF (batch_year + 4) <= current_year AND has_all_8: "Completed"
+            # ELSE: "Pursuing"
+            
             has_all_8 = (len(sorted_sem_nums) >= 8)
-            yoc = "Completed" if (batch_year + 4) <= current_yr and has_all_8 else "Pursuing"
+            
+            if (batch_year + 4) <= current_yr and has_all_8:
+                yoc = "Completed"
+            else:
+                yoc = "Pursuing"
                 
-            # --- FINAL NESTED RESTRUCTURE (ChatGPT Format) ---
-            restructured_data = {
-                "student": {
-                    "student_id": student_id,
-                    "full_name": student_data.get('full_name'),
-                    "first_name": student.get('first_name'),
-                    "last_name": student.get('last_name'),
-                    "date_of_birth": student.get('date_of_birth', '2003-05-12'), # Placeholder or actual if exists
-                    "email": student.get('email'),
-                    "phone": student.get('phone', '900000001')
-                },
-                "program_details": {
-                    "degree": "B.Tech",
-                    "department": branch,
-                    "batch_year": batch_year,
-                    "enrollment_date": f"{batch_year}-08-01",
-                    "expected_graduation_year": batch_year + 4
-                },
-                "academic_record": {
-                    "grading_system": "10-point scale",
-                    "semesters": final_semesters,
-                    "cumulative_summary": {
-                        "cgpa": cgpa,
-                        "total_credits_earned": total_earned_credits,
-                        "classification": result_class
-                    }
-                },
-                "institution": {
-                    "name": "KLE Technological University",
-                    "location": "Hubballi, Karnataka, India",
-                    "affiliation": "UGC"
-                },
-                "document_type": "academic_transcript",
-                "issued_for": f"Complete academic record up to current semester ({yoc})"
-            }
-
-            # Optional metadata blocks for VC root (will be moved by VCGenerator)
-            restructured_data["credentialStatus"] = {
-                "id": f"https://credentials.kle.edu/status/transcript/{datetime.utcnow().year}/0#0",
-                "type": "StatusList2021Entry",
-                "statusPurpose": "revocation",
-                "statusListIndex": "0",
-                "statusListCredential": f"https://credentials.kle.edu/status/transcript/{datetime.utcnow().year}"
-            }
-            restructured_data["credentialSchema"] = {
-                "id": "https://credentials.kle.edu/schemas/academic-transcript.json",
-                "type": "JsonSchemaValidator2018"
-            }
-            
-            # Injecting student_id for VCGenerator lookup
-            restructured_data["student_id"] = student_id
-            
-            return restructured_data
+            student_data.update({
+                "program": program,
+                "branch": branch, # Redundant but explicit
+                "year_of_completion": yoc,
+                "semesters": final_semesters,
+                "total_credits": str(total_earned_credits),
+                "cgpa": "{:.2f}".format(cgpa),
+                "cgpa_in_words": CredentialService._get_number_in_words(cgpa),
+                "result_class": result_class,
+                "date_of_issue": format_date(datetime.utcnow())
+            })
             
         elif credential_type == "workshop":
             # WORKSHOP remains LOCAL
@@ -518,43 +482,78 @@ class CredentialService:
             
             credential_id = vc_result["credential_id"]
 
-            # Create credential record
-            credential = Credential(
-                credential_id=credential_id,
-                batch_id=batch_id,
-                student_id=student_id,
-                credential_type=credential_type,
-                template_version="v1",
-                vc_json=json.dumps(vc_result["credential"]),
-                did_identifier=VCGenerator.generate_did(),
-                proof_signature=vc_result["proof_signature"],
-                issued_date=vc_result["issued_date"],
-                issuer_id=issuer_info["issuer_id"],
-                issuer_name=issuer_info.get("name"),
-                is_revoked=False
-            )
-            
-            db.session.add(credential)
+            # --- DE-DUPLICATION LOGIC ---
+            existing_credential = None
+            if credential_type == "markscard":
+                # For markscards, we check the specific exam session
+                exam_session = student_data.get("exam_session")
+                header = CredentialGradeHeader.query.filter_by(
+                    usn=student_id, 
+                    exam_session=exam_session
+                ).first()
+                if header:
+                    existing_credential = Credential.query.get(header.credential_id)
+            else:
+                # For transcripts and other one-off certificates, we check by type
+                existing_credential = Credential.query.filter_by(
+                    student_id=student_id, 
+                    credential_type=credential_type
+                ).first()
 
-            # For markscard credentials, also persist header + per-course records
+            if existing_credential:
+                # Update existing record instead of creating new
+                credential = existing_credential
+                credential.batch_id = batch_id
+                credential.vc_json = json.dumps(vc_result["credential"])
+                credential.proof_signature = vc_result["proof_signature"]
+                credential.issued_date = vc_result["issued_date"]
+                credential.issuer_id = issuer_info["issuer_id"]
+                credential.issuer_name = issuer_info.get("name")
+                credential.is_revoked = False # Ensure it's active if re-issued
+                # Keep the original credential_id for dashboard stability
+                credential_id = credential.credential_id
+            else:
+                # Create new credential record
+                credential = Credential(
+                    credential_id=credential_id,
+                    batch_id=batch_id,
+                    student_id=student_id,
+                    credential_type=credential_type,
+                    template_version="v1",
+                    vc_json=json.dumps(vc_result["credential"]),
+                    did_identifier=VCGenerator.generate_did(),
+                    proof_signature=vc_result["proof_signature"],
+                    issued_date=vc_result["issued_date"],
+                    issuer_id=issuer_info["issuer_id"],
+                    issuer_name=issuer_info.get("name"),
+                    is_revoked=False
+                )
+                db.session.add(credential)
+
+            # For markscard credentials, also persist/update header + per-course records
             if credential_type == "markscard":
                 courses = student_data.get("courses") or []
 
-                # Header
-                header = CredentialGradeHeader(
-                    credential_id=credential_id,
-                    usn=student_data.get("student_id"),
-                    student_name=f"{student_data.get('first_name', '')} {student_data.get('last_name', '')}".strip(),
-                    branch=student_data.get("department") or "",
-                    program=student_data.get("program") or "",
-                    father_or_mother_name=student_data.get("father_or_mother_name") or "",
-                    exam_session=student_data.get("exam_session") or "",
-                    issue_date=datetime.strptime(vc_result["issued_date"], '%Y-%m-%dT%H:%M:%SZ').date(),
-                    total_credits=student_data.get("total_credits") or 0,
-                    sgpa=student_data.get("sgpa") or 0.0,
-                )
-                db.session.add(header)
+                # Find or create header
+                header = CredentialGradeHeader.query.filter_by(credential_id=credential_id).first()
+                if not header:
+                    header = CredentialGradeHeader(credential_id=credential_id)
+                    db.session.add(header)
+                
+                header.usn = student_data.get("student_id")
+                header.student_name = f"{student_data.get('first_name', '')} {student_data.get('last_name', '')}".strip()
+                header.branch = student_data.get("department") or ""
+                header.program = student_data.get("program") or ""
+                header.father_or_mother_name = student_data.get("father_or_mother_name") or ""
+                header.exam_session = student_data.get("exam_session") or ""
+                header.issue_date = datetime.strptime(vc_result["issued_date"], '%Y-%m-%dT%H:%M:%SZ').date()
+                header.total_credits = student_data.get("total_credits") or 0
+                header.sgpa = student_data.get("sgpa") or 0.0
 
+                # Clear and re-populate course rows to handle changes
+                from backend.models import CredentialCourseRecord
+                CredentialCourseRecord.query.filter_by(credential_id=credential_id).delete()
+                
                 # Course rows
                 for idx, c in enumerate(courses, start=1):
                     record = CredentialCourseRecord(
